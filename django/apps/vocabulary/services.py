@@ -27,8 +27,13 @@ def calculate_sm2(ease_factor: float, interval: int, quality: int) -> tuple:
 
 
 def update_word_after_review(word, quality: int) -> None:
-    """Update word fields after a review."""
+    """Update word fields after a review. DT-06: increments times_wrong on wrong answers."""
     word.review_count += 1
+
+    if quality < 3:
+        # Wrong answer — increment times_wrong per DT-06 spec
+        word.times_wrong = (word.times_wrong or 0) + 1
+
     word.ease_factor, word.current_interval_days = calculate_sm2(
         word.ease_factor or 2.5, word.current_interval_days or 1, quality
     )

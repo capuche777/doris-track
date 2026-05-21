@@ -27,6 +27,7 @@ class Word(models.Model):
     review_count = models.IntegerField(default=0)
     mastery = models.CharField(max_length=10, choices=MASTERY_CHOICES, default="new")
     next_review_date = models.DateField(null=True, blank=True)
+    times_wrong = models.IntegerField(default=0, help_text="Times student answered this word incorrectly")
     current_interval_days = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

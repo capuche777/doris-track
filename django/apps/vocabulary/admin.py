@@ -5,6 +5,6 @@ from .models import Word
 
 @admin.register(Word)
 class WordAdmin(admin.ModelAdmin):
-    list_display = ["word", "student", "difficulty", "mastery", "review_count", "next_review_date"]
+    list_display = ["word", "student", "difficulty", "mastery", "review_count", "times_wrong", "next_review_date"]
     list_filter = ["difficulty", "mastery", "student"]
     search_fields = ["word", "definition"]

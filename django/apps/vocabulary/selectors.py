@@ -17,3 +17,8 @@ def get_words_by_mastery(student, mastery):
 
 def get_due_words_count(student):
     return get_words_for_review(student).count()
+
+
+def get_difficult_words(student, threshold: int = 3):
+    """Get words student keeps getting wrong (times_wrong >= threshold). DT-06."""
+    return Word.objects.filter(student=student, times_wrong__gte=threshold)
