@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Difficult Words - DorisTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .page-header h1 { font-size: 1.75rem; }
+    .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.875rem; font-weight: 600; }
+    .badge-new { background: #FEF3C7; color: #92400E; }
+    .words-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+    .words-table th, .words-table td { padding: 0.875rem 1rem; text-align: left; border-bottom: 1px solid #E5E7EB; }
+    .words-table th { background: var(--color-navy); color: var(--color-bone); font-size: 0.875rem; }
+    .words-table tr:hover { background: #F9FAFB; }
+    .rate-high { color: #DC2626; font-weight: 700; }
+    .rate-medium { color: #D97706; font-weight: 600; }
+    .rate-low { color: #65A30D; }
+    .empty-state { text-align: center; padding: 4rem 2rem; color: #6B7280; }
+    .empty-state svg { margin-bottom: 1rem; opacity: 0.5; }
+    .btn-sm { padding: 0.4rem 0.875rem; font-size: 0.875rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Words to Focus On</h1>
+    {% if student %}
+    <span class="badge badge-new">{{ difficult_words|length }} words need attention</span>
+    {% endif %}
+</div>
+
+{% if student and difficult_words %}
+<table class="words-table">
+    <thead>
+        <tr>
+            <th>Word</th>
+            <th>Definition</th>
+            <th>Times Wrong</th>
+            <th>Failure Rate</th>
+            <th>Last Reviewed</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in difficult_words %}
+        <tr>
+            <td><strong>{{ item.word.word }}</strong></td>
+            <td>{{ item.word.definition|truncatechars:50 }}</td>
+            <td>{{ item.times_wrong }}</td>
+            <td>
+                {% if item.failure_rate >= 50 %}
+                    <span class="rate-high">{{ item.failure_rate }}%</span>
+                {% elif item.failure_rate >= 30 %}
+                    <span class="rate-medium">{{ item.failure_rate }}%</span>
+                {% else %}
+                    <span class="rate-low">{{ item.failure_rate }}%</span>
+                {% endif %}
+            </td>
+            <td>{{ item.word.updated_at|date:"M d, Y" }}</td>
+            <td>
+                <a href="{% url 'vocabulary:word_detail' item.word.id %}" class="btn btn-secondary btn-sm">View</a>
+                <a href="{% url 'vocabulary:review_single' item.word.id %}" class="btn btn-primary btn-sm">Review</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="2" fill="none"/><path d="M22 32h20M32 22v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <h3>No difficult words yet</h3>
+    <p>Keep practicing — words you get wrong will appear here.</p>
+</div>
+{% endif %}
+{% endblock %}

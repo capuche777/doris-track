@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ word.word }} - Word Detail - DorisTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+    .word-card { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    .word-card h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .definition { font-size: 1.125rem; color: #4B5563; margin: 1rem 0; }
+    .meta { display: flex; gap: 2rem; margin-top: 1.5rem; flex-wrap: wrap; }
+    .meta-item { text-align: center; }
+    .meta-value { font-size: 1.5rem; font-weight: 700; color: var(--color-navy); }
+    .meta-label { font-size: 0.75rem; color: #6B7280; text-transform: uppercase; }
+    .failure-rate { font-size: 1.25rem; font-weight: 700; }
+    .rate-high { color: #DC2626; }
+    .rate-medium { color: #D97706; }
+    .rate-low { color: #65A30D; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'vocabulary:difficult_words' %}" class="btn btn-secondary" style="margin-bottom: 1.5rem;">&larr; Back to Difficult Words</a>
+
+<div class="word-card">
+    <h1>{{ word.word }}</h1>
+    <span class="badge badge-new" style="background: #DBEAFE; color: #1E40AF;">{{ word.difficulty }}</span>
+    <p class="definition">{{ word.definition }}</p>
+
+    {% if word.example_sentence %}
+    <blockquote style="border-left: 3px solid var(--color-gold); padding-left: 1rem; color: #6B7280; margin: 1rem 0;">
+        {{ word.example_sentence }}
+    </blockquote>
+    {% endif %}
+
+    <div class="meta">
+        <div class="meta-item">
+            <div class="meta-value">{{ times_wrong|default:word.times_wrong }}</div>
+            <div class="meta-label">Times Wrong</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-value">{{ word.review_count }}</div>
+            <div class="meta-label">Reviews</div>
+        </div>
+        <div class="meta-item">
+            <div class="failure-rate {% if failure_rate >= 50 %}rate-high{% elif failure_rate >= 30 %}rate-medium{% else %}rate-low{% endif %}">
+                {{ failure_rate }}%
+            </div>
+            <div class="meta-label">Failure Rate</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-value">{{ word.get_mastery_display }}</div>
+            <div class="meta-label">Mastery</div>
+        </div>
+    </div>
+</div>
+
+<a href="{% url 'vocabulary:review_single' word.id %}" class="btn btn-primary">Review This Word</a>
+{% endblock %}

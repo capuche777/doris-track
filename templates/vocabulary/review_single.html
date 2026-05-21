@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Review: {{ word.word }} - DorisTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+    .review-card { background: white; border-radius: 12px; padding: 2.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 600px; margin: 2rem auto; text-align: center; }
+    .definition-prompt { font-size: 1.5rem; font-weight: 600; color: var(--color-navy); margin-bottom: 0.5rem; }
+    .hint { color: #6B7280; font-size: 0.875rem; margin-bottom: 2rem; }
+    .answer-input { width: 100%; padding: 1rem; font-size: 1.25rem; border: 2px solid #E5E7EB; border-radius: 8px; margin-bottom: 1rem; text-align: center; }
+    .answer-input:focus { outline: none; border-color: var(--color-gold); }
+    .feedback { padding: 1rem; border-radius: 8px; margin-top: 1rem; font-size: 1rem; }
+    .feedback.correct { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
+    .feedback.wrong { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+    .word-link { display: block; margin-top: 1rem; font-size: 0.875rem; color: var(--color-gold); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-card">
+    <p class="definition-prompt">{{ word.definition }}</p>
+    <p class="hint">Type the word that matches the definition above</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="feedback {% if message.tags == 'success' %}correct{% else %}wrong{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+        <a href="{% url 'vocabulary:difficult_words' %}" class="word-link">Back to difficult words</a>
+    {% else %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="text" name="answer" class="answer-input" placeholder="Type your answer..." autofocus required>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Answer</button>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}
