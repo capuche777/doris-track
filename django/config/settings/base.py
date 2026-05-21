@@ -18,8 +18,15 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    # Local apps
+    "apps.profiles",
+    "apps.vocabulary",
+    "apps.grammar",
+    "apps.practice",
+    "apps.quiz",
     "apps.students",
     "apps.dashboard",
+    "apps.scores",
 ]
 
 MIDDLEWARE = [
@@ -53,7 +60,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# SQLite for single-student system (no Docker needed)
+# SQLite for single-student system
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",

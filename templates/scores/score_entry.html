@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Score Entry — DorisTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+  .score-form { max-width: 600px; margin: 2rem 0; }
+  .score-form label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+  .score-form input[type="number"] {
+    width: 100%; padding: 0.5rem;
+    border: 1px solid #D1D5DB; border-radius: 6px;
+    font-size: 1rem; margin-bottom: 1rem;
+  }
+  .score-form input[type="date"] {
+    width: 100%; padding: 0.5rem;
+    border: 1px solid #D1D5DB; border-radius: 6px;
+    font-size: 1rem; margin-bottom: 1rem;
+  }
+  .score-form textarea {
+    width: 100%; padding: 0.5rem;
+    border: 1px solid #D1D5DB; border-radius: 6px;
+    font-size: 1rem; margin-bottom: 1rem;
+    min-height: 80px;
+  }
+  .skill-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+  .skill-label { min-width: 120px; font-weight: 500; }
+  .skill-bar-wrap { flex: 1; }
+  .skill-value-display { min-width: 40px; text-align: right; font-weight: 700; }
+  .decline-note {
+    background: #FEF9C3;
+    border: 1px solid #EAB308;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Record Assessment</h1>
+
+{% if decline_warning %}
+<div class="decline-note">
+  <strong>Note:</strong> Declining skills detected in the last week:
+  {% for skill, info in decline_skills.items %}{{ skill|capfirst }} ({{ info.change }}pts){% if not forloop.last %}, {% endif %}{% endfor %}
+</div>
+{% endif %}
+
+{% if not student %}
+<p>No student found. Please create a student profile first.</p>
+{% else %}
+<form method="post" class="score-form">
+  {% csrf_token %}
+  <p style="margin-bottom:1.5rem;">
+    <label for="assessment_date">Date</label>
+    <input type="date" name="assessment_date" id="assessment_date" value="{{ today }}" required>
+  </p>
+
+  <p style="margin-bottom:0.5rem;"><strong>Scores (0–100)</strong></p>
+  <p style="font-size:0.85rem; color:#6B7280; margin-bottom:1rem;">Enter 0 if not assessed</p>
+
+  {% for skill in skills %}
+  <div class="skill-row">
+    <label class="skill-label" for="score_{{ skill }}">{{ skill|capfirst }}</label>
+    <input type="number" name="score_{{ skill }}" id="score_{{ skill }}"
+           min="0" max="100" placeholder="0–100" value="">
+  </div>
+  {% endfor %}
+
+  <p style="margin-top:1rem;">
+    <label for="notes">Notes (optional)</label>
+    <textarea name="notes" id="notes" placeholder="Observations, areas for improvement..."></textarea>
+  </p>
+
+  <button type="submit" class="btn btn-primary">Save Assessment</button>
+</form>
+{% endif %}
+{% endblock %}

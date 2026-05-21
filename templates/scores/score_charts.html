@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Score Charts — DorisTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+  .decline-banner {
+    background: #FEE2E2;
+    border: 1px solid #EF4444;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    color: #991B1B;
+  }
+  .chart-container { position: relative; height: 400px; margin: 2rem 0; }
+  .skill-legend { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Score Charts</h1>
+
+{% if decline_warning %}
+<div class="decline-banner">
+  <strong>Decline Alert:</strong>
+  {% for skill, info in decline_skills.items %}
+    {{ skill|capfirst }} dropped {{ info.change }}pts in the last 7 days{% if not forloop.last %}, {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if latest %}
+<div class="skill-legend">
+  <strong>Skills:</strong>
+  <span class="legend-item"><span class="legend-dot" style="background:#3B82F6;"></span>Pronunciation</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#22C55E;"></span>Fluency</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#F97316;"></span>Intonation</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#EF4444;"></span>Grammar</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#A855F7;"></span>Vocabulary</span>
+</div>
+{% endif %}
+
+{% if not student %}
+<p>No student found.</p>
+{% else %}
+<div style="margin: 1rem 0;">
+  <a href="{% url 'scores:score_list' %}" class="btn btn-secondary">Back to Scores</a>
+  <a href="{% url 'scores:score_entry' %}" class="btn btn-primary">+ New Assessment</a>
+</div>
+
+{% if chart_data %}
+<div class="chart-container">
+  <canvas id="scoreChart"></canvas>
+</div>
+{% else %}
+<p>No score data yet. <a href="{% url 'scores:score_entry' %}">Record the first assessment.</a></p>
+{% endif %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const chartData = {{ chart_data|safe }};
+if (chartData && document.getElementById('scoreChart')) {
+  new Chart(document.getElementById('scoreChart'), {
+    type: 'line',
+    data: {
+      labels: chartData.labels,
+      datasets: chartData.datasets,
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+      },
+      scales: {
+        y: {
+          min: 0,
+          max: 100,
+          title: { display: true, text: 'Score (0-100)' },
+        },
+      },
+    },
+  });
+}
+</script>
+{% endblock %}
