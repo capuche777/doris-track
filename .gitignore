@@ -1,7 +1,10 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -18,27 +21,34 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
 # Virtual environments
 venv/
-ENV/
 env/
-.venv/
+.env
 
 # IDE
-.vscode/
 .idea/
+.vscode/
 *.swp
 *.swo
 
-# Local settings
-.env
-*.local
+# Static/media files (bind mounts for local dev)
+static/
+media/
 
-# DB
-*.sqlite3
+# Django
+*.log
 db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/mediafiles/
 
-# Static files
-staticfiles/
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db

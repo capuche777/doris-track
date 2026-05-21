@@ -1,2 +1,68 @@
-# doris-track
-DorisTrack - Student tracking application for D2Clic English Learning Platform.
+# DorisTrack
+
+A Django-based learning progress tracker for a single student.
+
+## Structure
+
+```
+doris-track/
+├── django/
+│   ├── manage.py
+│   ├── apps/
+│   │   ├── students/    # Core models (Student, Word, Score, Quiz, GrammarCorrection)
+│   │   └── dashboard/   # Dashboard views
+│   └── config/
+│       ├── settings/    # base.py, dev.py, prod.py
+│       ├── urls.py
+│       ├── wsgi.py
+│       └── asgi.py
+├── templates/          # Base HTML templates (D2Clic branding)
+├── static/             # CSS, JS, images
+├── pytest.ini
+├── requirements.txt
+├── Dockerfile
+└── docker-compose.yml
+```
+
+## Setup (Development)
+
+```bash
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run migrations
+python django/manage.py migrate
+
+# Create superuser
+python django/manage.py createsuperuser
+
+# Run server
+python django/manage.py runserver
+```
+
+## Setup (Docker)
+
+```bash
+docker compose up --build
+```
+
+## Tech Stack
+
+- Django 5.x
+- Django REST Framework
+- SQLite (dev) / PostgreSQL (prod)
+- Gunicorn
+- D2Clic Brand: Navy `#0D1B2A`, Gold `#D4A843`, Bone `#F9F7F4`
+- Fonts: Nunito (headings), DM Sans (body)
+
+## Features
+
+- Vocabulary bank with spaced repetition (SM-2 algorithm)
+- Daily score tracking with Chart.js visualization
+- Weekly quiz generation
+- Grammar corrections log
+- Student dashboard

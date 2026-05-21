@@ -1,21 +1,14 @@
 """
-Django base settings for doris-track project.
+Django settings for DorisTrack project.
 """
 import os
 from pathlib import Path
-import environ
+from django.core.management.utils import get_random_secret_key
 
-env = environ.Env()
-
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-environ.Env.read_env(BASE_DIR / ".env")
-
-SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-in-production")
-
-DEBUG = True
-
-ALLOWED_HOSTS = ["*"]
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", get_random_secret_key())
+DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -24,7 +17,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "apps.profiles",
+    "rest_framework",
+    "apps.students",
+    "apps.dashboard",
 ]
 
 MIDDLEWARE = [
@@ -56,7 +51,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
+# SQLite for single-student system (no Docker needed)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -64,7 +61,12 @@ DATABASES = {
     }
 }
 
-AUTH_PASSWORD_VALIDATORS = []
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -72,7 +74,14 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR.parent / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# D2Clic brand colors
+COLOR_NAVY = "#0D1B2A"
+COLOR_GOLD = "#D4A843"
+COLOR_BONE = "#F9F7F4"

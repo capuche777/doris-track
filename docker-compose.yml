@@ -1,0 +1,18 @@
+# DorisTrack with SQLite (no external DB needed)
+# For development: just run `python django/manage.py runserver`
+# For production with PostgreSQL:
+version: "3.9"
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=False
+      - DJANGO_SECRET_KEY=change-me-in-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+    volumes:
+      - ./django:/app/django
+      - ./templates:/app/templates
+      - ./static:/app/static
+    restart: unless-stopped

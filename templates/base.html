@@ -3,105 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DorisTrack - Track your learning progress">
     <title>{% block title %}DorisTrack{% endblock %}</title>
     <style>
         :root {
-            --navy: #0D1B2A;
-            --gold: #D4A843;
-            --bone: #F9F7F4;
-            --text: #1B1B1B;
-            --radius: 8px;
-            --shadow: 0 2px 8px rgba(13, 27, 42, 0.12);
+            --color-navy: #0D1B2A;
+            --color-gold: #D4A843;
+            --color-bone: #F9F7F4;
+            --font-heading: 'Nunito', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bone);
-            color: var(--text);
-            min-height: 100vh;
+            font-family: var(--font-body);
+            background-color: var(--color-bone);
+            color: var(--color-navy);
+            line-height: 1.6;
         }
-        nav {
-            background: var(--navy);
-            padding: 1rem 2rem;
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-        }
-        nav .brand {
-            color: var(--gold);
-            font-family: 'Nunito', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-        nav a {
-            color: var(--bone);
-            text-decoration: none;
-            font-size: 0.95rem;
-        }
-        nav a:hover { color: var(--gold); }
-        main {
-            max-width: 900px;
-            margin: 3rem auto;
-            padding: 0 1.5rem;
-        }
-        .card {
-            background: white;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-        }
-        h1 { color: var(--navy); margin-bottom: 0.5rem; font-family: 'Nunito', sans-serif; }
-        .badge {
+        h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 700; }
+        a { color: var(--color-gold); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .btn {
             display: inline-block;
-            background: var(--gold);
-            color: var(--navy);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
             font-weight: 600;
-            margin: 0.25rem 0;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
         }
-        .progress-bar {
-            background: #e0e0e0;
-            border-radius: 20px;
-            height: 24px;
-            overflow: hidden;
-            margin: 1rem 0;
+        .btn-primary {
+            background-color: var(--color-gold);
+            color: var(--color-navy);
         }
-        .progress-fill {
-            background: var(--gold);
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--navy);
-            font-weight: 600;
-            font-size: 0.85rem;
+        .btn-primary:hover { opacity: 0.9; text-decoration: none; }
+        .btn-secondary {
+            background-color: var(--color-navy);
+            color: var(--color-bone);
         }
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-        .info-item label {
-            color: #888;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .info-item p { font-size: 1.1rem; font-weight: 500; color: var(--navy); margin-top: 0.25rem; }
-        .tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .btn-secondary:hover { opacity: 0.9; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+        {% block extra_css %}{% endblock %}
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <nav>
-        <span class="brand">DorisTrack</span>
-        <a href="{% url 'profiles:student_profile' %}">Profile</a>
-    </nav>
-    <main>
-        {% block content %}{% endblock %}
+    <header class="site-header">
+        <nav class="navbar">
+            <div class="container">
+                <a href="/" class="brand">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="32" height="32" rx="8" fill="#0D1B2A"/>
+                        <path d="M8 22L16 10L24 22H8Z" fill="#D4A843"/>
+                    </svg>
+                    DorisTrack
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
     </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2026 DorisTrack. Built with D2Clic structure.</p>
+        </div>
+    </footer>
 </body>
 </html>
