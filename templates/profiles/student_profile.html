@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Student Profile — DorisTrack{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>{{ student.name }}</h1>
+    <div style="margin-top: 0.5rem;">
+        <span class="badge">{{ student.current_level }}</span>
+        <span style="color: var(--navy); margin: 0 0.5rem;">→</span>
+        <span class="badge" style="background: var(--navy); color: var(--gold);">{{ student.target_level }}</span>
+    </div>
+
+    <div class="progress-bar" style="margin-top: 1.5rem;">
+        <div class="progress-fill" style="width: 50%;">50% to goal</div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-item">
+            <label>Start Date</label>
+            <p>{{ student.start_date|date:"F j, Y" }}</p>
+        </div>
+        <div class="info-item">
+            <label>Current Level</label>
+            <p>{{ student.current_level }}</p>
+        </div>
+        <div class="info-item">
+            <label>Target Level</label>
+            <p>{{ student.target_level }}</p>
+        </div>
+        <div class="info-item">
+            <label>Priority Areas</label>
+            <div class="tags">
+                {% for area in student.priority_areas %}
+                <span class="badge">{{ area }}</span>
+                {% empty %}
+                <span style="color:#888;">No priority areas set</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

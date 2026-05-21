@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DorisTrack{% endblock %}</title>
+    <style>
+        :root {
+            --navy: #0D1B2A;
+            --gold: #D4A843;
+            --bone: #F9F7F4;
+            --text: #1B1B1B;
+            --radius: 8px;
+            --shadow: 0 2px 8px rgba(13, 27, 42, 0.12);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bone);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        nav {
+            background: var(--navy);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        nav .brand {
+            color: var(--gold);
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        nav a {
+            color: var(--bone);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+        nav a:hover { color: var(--gold); }
+        main {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        h1 { color: var(--navy); margin-bottom: 0.5rem; font-family: 'Nunito', sans-serif; }
+        .badge {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--navy);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0.25rem 0;
+        }
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 20px;
+            height: 24px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        .progress-fill {
+            background: var(--gold);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--navy);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .info-item label {
+            color: #888;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .info-item p { font-size: 1.1rem; font-weight: 500; color: var(--navy); margin-top: 0.25rem; }
+        .tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    </style>
+</head>
+<body>
+    <nav>
+        <span class="brand">DorisTrack</span>
+        <a href="{% url 'profiles:student_profile' %}">Profile</a>
+    </nav>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
