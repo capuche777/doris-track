@@ -14,7 +14,7 @@ class PracticeSession(models.Model):
     ]
 
     student = models.ForeignKey(
-        "apps.profiles.Student", on_delete=models.CASCADE, related_name="practice_sessions"
+        "profiles.Student", on_delete=models.CASCADE, related_name="practice_sessions"
     )
     date = models.DateField()
     practice_type = models.CharField(max_length=20, choices=PRACTICE_TYPE_CHOICES)

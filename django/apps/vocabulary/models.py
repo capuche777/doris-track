@@ -16,7 +16,7 @@ class Word(models.Model):
     ]
 
     student = models.ForeignKey(
-        "apps.profiles.Student", on_delete=models.CASCADE, related_name="words"
+        "profiles.Student", on_delete=models.CASCADE, related_name="words"
     )
     word = models.CharField(max_length=255)
     definition = models.TextField()

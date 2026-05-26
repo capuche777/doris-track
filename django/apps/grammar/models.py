@@ -13,7 +13,7 @@ class Correction(models.Model):
     ]
 
     student = models.ForeignKey(
-        "apps.profiles.Student", on_delete=models.CASCADE, related_name="grammar_corrections"
+        "profiles.Student", on_delete=models.CASCADE, related_name="grammar_corrections"
     )
     date = models.DateField()
     student_mistake = models.TextField()

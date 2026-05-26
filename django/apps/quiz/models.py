@@ -6,7 +6,7 @@ from django.utils import timezone
 class Quiz(models.Model):
     """Weekly quiz."""
     student = models.ForeignKey(
-        "apps.profiles.Student", on_delete=models.CASCADE, related_name="quizzes"
+        "profiles.Student", on_delete=models.CASCADE, related_name="quizzes"
     )
     week_start_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
