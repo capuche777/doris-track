@@ -1,7 +1,6 @@
 # DorisTrack with SQLite (no external DB needed)
 # For development: just run `python django/manage.py runserver`
 # For production with PostgreSQL:
-version: "3.9"
 services:
   web:
     build: .
@@ -12,7 +11,9 @@ services:
       - DJANGO_SECRET_KEY=change-me-in-production
       - ALLOWED_HOSTS=localhost,127.0.0.1
     volumes:
-      - ./django:/app
-      - ./templates:/app/templates
-      - ./static:/app/static
+      # Mount the whole repo at /app so code lives at /app/django (matches
+      # the image's WORKDIR /app/django and the four-parent BASE_DIR). This
+      # also exposes repo-root templates/ and static/ at /app/templates and
+      # /app/static.
+      - .:/app
     restart: unless-stopped
