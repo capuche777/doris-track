@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - DorisTrack{% endblock %}
+{% block extra_css %}
+<style>
+.dashboard-header {
+    padding: 2rem 0 1rem;
+    border-bottom: 1px solid rgba(13, 27, 42, 0.1);
+    margin-bottom: 2rem;
+}
+.dashboard-header h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+.level-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.level-badge.current { background: #D4A843; color: #0D1B2A; }
+.level-badge.target { background: #0D1B2A; color: #F9F7F4; margin-left: 0.5rem; }
+.student-info { color: #666; font-size: 0.95rem; margin-top: 0.25rem; }
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(13, 27, 42, 0.08);
+}
+.card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #D4A843;
+}
+.card h2 span.declining { color: #c0392b; }
+
+/* Score Summary */
+.score-list { list-style: none; }
+.score-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0; }
+.score-item:last-child { border-bottom: none; }
+.skill-name { font-weight: 500; text-transform: capitalize; }
+.skill-score { font-weight: 700; color: #D4A843; font-size: 1.1rem; }
+.skill-declining { color: #c0392b; }
+.declining-note { font-size: 0.8rem; color: #c0392b; margin-left: 0.5rem; }
+
+/* Vocabulary Stats */
+.vocab-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.vocab-stat { text-align: center; }
+.vocab-stat .number { font-size: 2rem; font-weight: 800; color: #D4A843; }
+.vocab-stat .label { font-size: 0.85rem; color: #666; }
+.vocab-stat.mastered .number { color: #27ae60; }
+.vocab-stat.due .number { color: #c0392b; }
+
+/* Practice Streak */
+.streak-display { text-align: center; padding: 1rem; }
+.streak-number { font-size: 3rem; font-weight: 800; color: #D4A843; }
+.streak-label { font-size: 1rem; color: #666; margin-top: 0.25rem; }
+.streak-detail { font-size: 0.85rem; color: #888; margin-top: 0.5rem; }
+.no-data { color: #999; font-style: italic; text-align: center; padding: 2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Welcome{{ student.name|yes:", "|yes:student.name }}!</h1>
+    <span class="level-badge current">{{ student.current_level }}</span>
+    <span class="level-badge target">Target: {{ student.target_level }}</span>
+    {% if dashboard.student_info.tutor %}
+    <p class="student-info">Tutor: {{ dashboard.student_info.tutor }}</p>
+    {% endif %}
+</div>
+
+<div class="dashboard-grid">
+    <!-- Score Summary -->
+    <div class="card">
+        <h2>Score Summary</h2>
+        {% if dashboard.score_summary.latest_per_skill %}
+        <ul class="score-list">
+        {% for skill, value in dashboard.score_summary.latest_per_skill.items %}
+            <li class="score-item">
+                <span class="skill-name">{{ skill }}</span>
+                <span class="skill-score {% if skill in dashboard.score_summary.declining_skills %}skill-declining{% endif %}">{{ value }}%</span>
+                {% if skill in dashboard.score_summary.declining_skills %}
+                <span class="declining-note">↓ declining</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+        {% else %}
+        <p class="no-data">No scores recorded yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Vocabulary Stats -->
+    <div class="card">
+        <h2>Vocabulary Bank</h2>
+        <div class="vocab-stats">
+            <div class="vocab-stat">
+                <div class="number">{{ dashboard.vocabulary_stats.total_words }}</div>
+                <div class="label">Total Words</div>
+            </div>
+            <div class="vocab-stat">
+                <div class="number" style="color:#27ae60">{{ dashboard.vocabulary_stats.mastered }}</div>
+                <div class="label">Mastered</div>
+            </div>
+            <div class="vocab-stat">
+                <div class="number" style="color:#2980b9">{{ dashboard.vocabulary_stats.learning }}</div>
+                <div class="label">Learning</div>
+            </div>
+            <div class="vocab-stat">
+                <div class="number">{{ dashboard.vocabulary_stats.new }}</div>
+                <div class="label">New</div>
+            </div>
+        </div>
+        {% if dashboard.vocabulary_stats.words_due_today > 0 %}
+        <p style="margin-top:1rem;color:#c0392b;font-weight:600;text-align:center;">
+            {{ dashboard.vocabulary_stats.words_due_today }} word{{ dashboard.vocabulary_stats.words_due_today|pluralize }} due for review today
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Practice Streak -->
+    <div class="card">
+        <h2>Practice Streak</h2>
+        <div class="streak-display">
+            <div class="streak-number">{{ dashboard.practice_streak.streak }}</div>
+            <div class="streak-label">day streak</div>
+            {% if dashboard.practice_streak.last_practice %}
+            <div class="streak-detail">Last practice: {{ dashboard.practice_streak.last_practice }}</div>
+            {% endif %}
+            <div class="streak-detail">{{ dashboard.practice_streak.sessions_last_30_days }} sessions this month</div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Assessments -->
+{% if dashboard.score_summary.latest_assessments %}
+<div class="card">
+    <h2>Recent Assessments</h2>
+    <ul class="score-list">
+    {% for assessment in dashboard.score_summary.latest_assessments %}
+        <li class="score-item">
+            <span class="skill-name">{{ assessment.date }}</span>
+            <span style="color:#666;font-size:0.9rem;">
+                {% for skill, value in assessment.scores.items %}{{ skill }}: {{ value }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </span>
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endblock %}
