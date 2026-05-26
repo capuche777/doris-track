@@ -28,6 +28,11 @@ def get_student_dashboard_data(student):
         "score_summary": get_score_summary(student),
         "vocabulary_stats": get_vocabulary_stats(student),
         "practice_streak": get_practice_streak(student),
+        "difficult_words": get_difficult_words(student),
+        "grammar_alerts": get_grammar_alerts(student),
+        "quiz_scores": get_quiz_scores(student),
+        "next_quiz_date": get_next_quiz_date(student),
+        "recent_corrections": get_recent_corrections(student),
     }
 
 
@@ -119,6 +124,7 @@ def get_practice_streak(student):
     Calculate current practice streak (consecutive days with practice).
     Returns streak count and last practice date.
     """
+    today = date.today()
     sessions = (
         PracticeSession.objects
         .filter(student=student)
@@ -128,11 +134,11 @@ def get_practice_streak(student):
     )
     dates = list(sessions)
     if not dates:
-        return {"streak": 0, "last_practice": None}
+        return {"streak": 0, "last_practice": None, "minutes_this_week": 0, "sessions_last_30_days": 0}
 
     last_practice = dates[0]
     streak = 0
-    check_date = date.today()
+    check_date = today
 
     # Count consecutive days backwards from today
     for d in sorted(dates, reverse=True):
@@ -142,15 +148,86 @@ def get_practice_streak(student):
         else:
             break
 
-    # Alternative: simple count of sessions in last N days
-    # Just count distinct days in last 30
-    recent_sessions = [
-        d for d in dates
-        if d >= date.today() - timedelta(days=30)
-    ]
+    week_start = today - timedelta(days=today.weekday())
+    minutes_this_week = (
+        PracticeSession.objects
+        .filter(student=student, date__gte=week_start)
+        .aggregate(total=models.Sum("duration_minutes"))["total"] or 0
+    )
 
     return {
         "streak": streak,
         "last_practice": last_practice.isoformat() if last_practice else None,
-        "sessions_last_30_days": len(recent_sessions),
+        "sessions_last_30_days": len([d for d in dates if d >= date.today() - timedelta(days=30)]),
+        "minutes_this_week": minutes_this_week,
     }
+
+
+def get_difficult_words(student, limit=5):
+    """Return top `limit` most-missed words (highest times_wrong)."""
+    words = (
+        Word.objects
+        .filter(student=student, times_wrong__gt=0)
+        .order_by("-times_wrong")[:limit]
+    )
+    return [
+        {"word": w.word, "times_wrong": w.times_wrong, "mastery": w.mastery}
+        for w in words
+    ]
+
+
+def get_grammar_alerts(student, limit=3):
+    """Return top `limit` most common grammar mistakes this month."""
+    from apps.grammar.models import Correction
+    month_start = date.today().replace(day=1)
+    corrections = (
+        Correction.objects
+        .filter(student=student, date__gte=month_start)
+        .values("category")
+        .annotate(count=models.Count("id"))
+        .order_by("-count")[:limit]
+    )
+    return [
+        {"category": c["category"], "count": c["count"]}
+        for c in corrections
+    ]
+
+
+def get_recent_corrections(student, limit=10):
+    """Return last `limit` grammar corrections."""
+    from apps.grammar.models import Correction
+    corrections = Correction.objects.filter(student=student).order_by("-date")[:limit]
+    return [
+        {
+            "date": c.date.isoformat(),
+            "mistake": c.student_mistake,
+            "correct": c.correct_version,
+            "rule": c.grammar_rule,
+            "category": c.category,
+        }
+        for c in corrections
+    ]
+
+
+def get_quiz_scores(student, limit=3):
+    """Return last `limit` quiz scores."""
+    from apps.quiz.models import Quiz
+    quizzes = Quiz.objects.filter(student=student).order_by("-week_start_date")[:limit]
+    return [
+        {
+            "week_start_date": q.week_start_date.isoformat(),
+            "score": q.get_score() if hasattr(q, "get_score") else None,
+        }
+        for q in quizzes
+    ]
+
+
+def get_next_quiz_date(student):
+    """Return the upcoming quiz date (next Monday from today)."""
+    from apps.quiz.models import Quiz
+    today = date.today()
+    days_until_monday = (7 - today.weekday()) % 7 or 7
+    next_monday = today + timedelta(days=days_until_monday)
+    # Check if quiz exists for that week
+    existing = Quiz.objects.filter(student=student, week_start_date=next_monday).exists()
+    return {"next_quiz_date": next_monday.isoformat(), "scheduled": existing}
