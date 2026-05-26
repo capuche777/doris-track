@@ -168,8 +168,8 @@
     {% endif %}
     <nav class="nav-links">
         <a href="{% url 'scores:score_list' %}" class="nav-link">Scores</a>
-        <a href="{% url 'vocabulary:vocabulary_list' %}" class="nav-link">Vocabulary</a>
-        <a href="{% url 'practice:practice_list' %}" class="nav-link">Practice</a>
+        <a href="{% url 'vocabulary:review_session' %}" class="nav-link">Vocabulary</a>
+        <a href="{% url 'practice:list' %}" class="nav-link">Practice</a>
         <a href="{% url 'quiz:quiz_list' %}" class="nav-link">Quiz</a>
         <a href="{% url 'grammar:correction_list' %}" class="nav-link">Grammar</a>
     </nav>
@@ -318,8 +318,8 @@
         <h2>Quick Actions</h2>
         <div class="quick-actions">
             <a href="{% url 'scores:score_entry' %}" class="qa-btn">Add Score</a>
-            <a href="{% url 'vocabulary:vocabulary_list' %}" class="qa-btn">Review Vocabulary</a>
-            <a href="{% url 'practice:practice_log' %}" class="qa-btn">Log Practice</a>
+            <a href="{% url 'vocabulary:review_session' %}" class="qa-btn">Review Vocabulary</a>
+            <a href="{% url 'practice:add' %}" class="qa-btn">Log Practice</a>
             <a href="{% url 'quiz:quiz_take' %}" class="qa-btn">Take Quiz</a>
         </div>
     </div>
