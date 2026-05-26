@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Grammar Corrections - DorisTrack{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1>Grammar Correction Log</h1>
+        <a href="{% url 'grammar:correction_add' %}" style="background: var(--color-navy, #1e3a5f); color: #fff; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none;">+ Add Correction</a>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" style="background: #f9fafb; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+        <label>
+            Category:
+            <select name="category" style="padding: 0.4rem; border-radius: 6px; border: 1px solid #d1d5db;">
+                <option value="">All</option>
+                {% for cat in categories %}
+                <option value="{{ cat.category }}" {% if filters.category == cat.category %}selected{% endif %}>{{ cat.label }} ({{ cat.count }})</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            From: <input type="date" name="date_from" value="{{ filters.date_from }}" style="padding: 0.4rem; border-radius: 6px; border: 1px solid #d1d5db;">
+        </label>
+        <label>
+            To: <input type="date" name="date_to" value="{{ filters.date_to }}" style="padding: 0.4rem; border-radius: 6px; border: 1px solid #d1d5db;">
+        </label>
+        <button type="submit" style="padding: 0.5rem 1rem; background: #1e3a5f; color: #fff; border: none; border-radius: 6px; cursor: pointer;">Filter</button>
+        <a href="{% url 'grammar:correction_list' %}" style="padding: 0.5rem 1rem; color: #6b7280; text-decoration: none;">Clear</a>
+    </form>
+
+    <!-- Analytics link -->
+    <div style="margin-bottom: 1rem;">
+        <a href="{% url 'grammar:correction_analytics' %}{% if filters.category %}?trend_category={{ filters.category }}{% endif %}" style="color: #1e3a5f; text-decoration: underline;">📊 View Analytics</a>
+    </div>
+
+    {% if corrections %}
+    <table style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+        <thead style="background: #f3f4f6;">
+            <tr>
+                <th style="padding: 0.75rem 1rem; text-align: left;">Date</th>
+                <th style="padding: 0.75rem 1rem; text-align: left;">Category</th>
+                <th style="padding: 0.75rem 1rem; text-align: left;">Mistake</th>
+                <th style="padding: 0.75rem 1rem; text-align: left;">Correction</th>
+                <th style="padding: 0.75rem 1rem; text-align: left;">Rule</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for corr in corrections %}
+            <tr style="border-bottom: 1px solid #f3f4f6;">
+                <td style="padding: 0.75rem 1rem;">{{ corr.date }}</td>
+                <td style="padding: 0.75rem 1rem;">
+                    <span style="background: #e0e7ff; color: #3730a3; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem;">
+                        {{ corr.get_category_display }}
+                    </span>
+                </td>
+                <td style="padding: 0.75rem 1rem; color: #dc2626;">{{ corr.student_mistake }}</td>
+                <td style="padding: 0.75rem 1rem; color: #059669;">{{ corr.correct_version }}</td>
+                <td style="padding: 0.75rem 1rem; font-size: 0.85rem; color: #6b7280;">{{ corr.grammar_rule|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; padding: 3rem; color: #6b7280;">No corrections logged yet. <a href="{% url 'grammar:correction_add' %}">Add the first one.</a></p>
+    {% endif %}
+</div>
+{% endblock %}

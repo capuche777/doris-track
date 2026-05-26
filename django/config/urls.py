@@ -10,6 +10,7 @@ urlpatterns = [
     path("scores/", include("apps.scores.urls")),
     path("vocabulary/", include("apps.vocabulary.urls")),
     path("quiz/", include("apps.quiz.urls")),
+    path("grammar/", include("apps.grammar.urls")),
 ]
 
 if settings.DEBUG:
