@@ -23,6 +23,26 @@ def get_score_history(student_id: int, skill: str = None):
     return qs.select_related("assessment").order_by("assessment__date")
 
 
+def get_score_trends(student_id: int, skill: str = None, days: int = 30) -> list:
+    """
+    Return score trend data as a list of (date_string, value) tuples for a given skill.
+    If skill is None, returns data for all skills combined.
+    """
+    from datetime import date, timedelta
+    end_date = date.today()
+    start_date = end_date - timedelta(days=days)
+
+    qs = (
+        Score.objects
+        .filter(assessment__student_id=student_id, assessment__date__gte=start_date, assessment__date__lte=end_date)
+        .order_by("assessment__date")
+    )
+    if skill:
+        qs = qs.filter(skill=skill)
+
+    return [(s.assessment.date.isoformat(), s.value) for s in qs]
+
+
 def get_latest_scores(student_id: int) -> dict:
     """
     Return the most recent score value per skill for a student.

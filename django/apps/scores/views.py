@@ -167,11 +167,16 @@ def score_charts_view(request):
             "pointRadius": 4,
         })
 
-    # Baseline: average of all scores across all skills for each date
-    baseline_values = []
-    for d in date_vals:
-        day_scores = [s.value for s in all_scores_qs if s.assessment.date == d]
-        baseline_values.append(round(sum(day_scores) / len(day_scores), 1) if day_scores else None)
+    # Baseline: average of all scores across all skills for each date (fixed N+1)
+    baseline_aggr = (
+        Score.objects
+        .filter(assessment__student_id=student.id)
+        .values("assessment__date")
+        .annotate(avg=Avg("value"))
+        .order_by("assessment__date")
+    )
+    date_to_avg = {row["assessment__date"]: row["avg"] for row in baseline_aggr}
+    baseline_values = [round(date_to_avg.get(d, 0) or 0, 1) if d in date_to_avg else None for d in date_vals]
 
     chart_datasets.append({
         "label": "Baseline",
@@ -185,19 +190,32 @@ def score_charts_view(request):
         "borderWidth": 2,
     })
 
-    # Declining zones: annotate red background bands where skills are declining
+    # Declining zones: annotate red background bands for the specific date range of decline
+    # The "decline" is calculated over last 7 days vs previous 7 days, so mark recent 7 days
     annotations = {}
     if declines:
+        today = date.today()
+        recent_start = today - timedelta(days=6)
+        recent_end = today
         for skill, info in declines.items():
             color = SKILL_COLORS.get(skill, "#EF4444")
-            annotations[f"decline_{skill}"] = {
-                "type": "box",
-                "xMin": 0,
-                "xMax": len(date_labels) - 1,
-                "backgroundColor": color + "22",
-                "borderColor": "transparent",
-                "borderWidth": 0,
-            }
+            # Find index range in date_labels for the declining period
+            xMin_idx = None
+            xMax_idx = None
+            for i, d in enumerate(date_vals):
+                if recent_start <= d <= recent_end:
+                    if xMin_idx is None:
+                        xMin_idx = i
+                    xMax_idx = i
+            if xMin_idx is not None and xMax_idx is not None:
+                annotations[f"decline_{skill}"] = {
+                    "type": "box",
+                    "xMin": xMin_idx,
+                    "xMax": xMax_idx,
+                    "backgroundColor": color + "22",
+                    "borderColor": "transparent",
+                    "borderWidth": 0,
+                }
 
     chart_data = {
         "labels": date_labels,
