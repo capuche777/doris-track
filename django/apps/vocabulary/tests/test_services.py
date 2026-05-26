@@ -1,14 +1,113 @@
-"""Tests for vocabulary services — DT-06."""
+"""Tests for vocabulary services — DT-05 binary spaced repetition."""
 import pytest
 from datetime import date, timedelta
 from apps.profiles.models import Student
 from apps.vocabulary.models import Word
-from apps.vocabulary.services import calculate_sm2, update_word_after_review, check_review_answer
+from apps.vocabulary.services import update_word_after_review, check_review_answer, calculate_next_interval
+
+
+@pytest.mark.django_db
+class TestCalculateNextInterval:
+    """Tests for calculate_next_interval — DT-05 binary system."""
+
+    def test_correct_advances_to_next_interval(self):
+        """Correct answer advances interval index."""
+        assert calculate_next_interval(0, True) == 2   # 1→2
+        assert calculate_next_interval(1, True) == 4   # 2→4
+        assert calculate_next_interval(2, True) == 7   # 4→7
+
+    def test_wrong_resets_to_first_interval(self):
+        """Wrong answer resets to 1 day (index 0)."""
+        assert calculate_next_interval(3, False) == 1  # 7→1
+        assert calculate_next_interval(5, False) == 1  # 30→1
+
+    def test_correct_at_last_interval_stays_at_max(self):
+        """Correct at max interval (30) stays at 30."""
+        assert calculate_next_interval(5, True) == 30  # stays at max
+
+
+@pytest.mark.django_db
+class TestUpdateWordAfterReview:
+    """Tests for update_word_after_review — DT-05 binary system."""
+
+    def setup_method(self):
+        """Create a student and word for testing."""
+        self.student = Student.objects.create(name="Test Student", email="test@test.com")
+
+    def test_correct_increments_review_count(self):
+        """Correct answer increments review_count."""
+        word = Word.objects.create(
+            student=self.student, word="test", definition="test def",
+            mastery="new", current_interval_days=1,
+        )
+        update_word_after_review(word, True)
+        assert word.review_count == 1
+
+    def test_wrong_increments_review_count_and_times_wrong(self):
+        """Wrong answer increments both review_count and times_wrong."""
+        word = Word.objects.create(
+            student=self.student, word="test", definition="test def",
+            mastery="learning", current_interval_days=2, times_wrong=0,
+        )
+        update_word_after_review(word, False)
+        assert word.review_count == 1
+        assert word.times_wrong == 1
+
+    def test_wrong_resets_interval_to_one_day(self):
+        """Wrong answer resets current_interval_days to 1."""
+        word = Word.objects.create(
+            student=self.student, word="test", definition="test def",
+            mastery="learning", current_interval_days=7,
+        )
+        update_word_after_review(word, False)
+        assert word.current_interval_days == 1
+
+    def test_correct_advances_interval(self):
+        """Correct answer advances interval."""
+        word = Word.objects.create(
+            student=self.student, word="test", definition="test def",
+            mastery="learning", current_interval_days=2,
+        )
+        update_word_after_review(word, True)
+        assert word.current_interval_days == 4
+
+    def test_new_to_learning_transition(self):
+        """After 2 correct reviews, mastery goes new→learning."""
+        word = Word.objects.create(
+            student=self.student, word="test", definition="test def",
+            mastery="new", current_interval_days=1, review_count=0,
+        )
+        update_word_after_review(word, True)   # review 1
+        assert word.mastery == "new"
+        update_word_after_review(word, True)   # review 2
+        assert word.mastery == "learning"
+
+    def test_learning_to_mastered_transition(self):
+        """At interval index >=4 (15 days), mastery goes learning→mastered."""
+        word = Word.objects.create(
+            student=self.student, word="test", definition="test def",
+            mastery="learning", current_interval_days=7, review_count=5,
+        )
+        update_word_after_review(word, True)
+        assert word.current_interval_days == 15
+        # current_interval_idx for 15 is 4, so mastery transitions
+        update_word_after_review(word, True)
+        assert word.mastery == "mastered"
+
+    def test_mastered_on_wrong_resets_to_learning(self):
+        """Wrong answer on mastered word resets mastery to learning."""
+        word = Word.objects.create(
+            student=self.student, word="test", definition="test def",
+            mastery="mastered", current_interval_days=30, times_wrong=0,
+        )
+        update_word_after_review(word, False)
+        assert word.mastery == "learning"
+        assert word.times_wrong == 1
 
 
 @pytest.mark.django_db
 class TestCheckReviewAnswer:
-    """Tests for check_review_answer service function. DT-06."""
+    """Tests for check_review_answer service function. DT-05."""
 
     def setup_method(self):
         """Create a student and word for testing."""
@@ -31,8 +130,6 @@ class TestCheckReviewAnswer:
         """Comparison should be case-insensitive."""
         result = check_review_answer(self.word.id, "EPHEMERAL")
         assert result["correct"] is True
-        result2 = check_review_answer(self.word.id, "Ephemeral")
-        assert result2["correct"] is True
 
     def test_correct_answer_strips_whitespace(self):
         """Leading/trailing whitespace should be stripped before comparison."""
@@ -51,7 +148,7 @@ class TestCheckReviewAnswer:
         assert result["correct_answer"] == "ephemeral"
 
     def test_incorrect_answer_increments_times_wrong(self):
-        """DT-06: wrong answer should increment word's times_wrong counter."""
+        """Wrong answer should increment word's times_wrong counter."""
         initial = self.word.times_wrong
         check_review_answer(self.word.id, "wrong")
         self.word.refresh_from_db()

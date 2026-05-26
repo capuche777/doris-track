@@ -1,9 +1,8 @@
-"""Tests for vocabulary app (DT-02, DT-05, DT-06)."""
+"""Tests for vocabulary app models — DT-05 binary spaced repetition."""
 import pytest
 from datetime import date, timedelta
 from apps.profiles.models import Student
 from apps.vocabulary.models import Word
-from apps.vocabulary.services import calculate_sm2, update_word_after_review
 
 
 @pytest.mark.django_db
@@ -20,7 +19,7 @@ class TestWordModel:
         assert word.mastery == "new"
 
     def test_word_times_wrong_defaults_to_zero(self):
-        """DT-02: times_wrong field should default to 0."""
+        """times_wrong field should default to 0."""
         student = Student.objects.create(name="John", email="john@test.com")
         word = Word.objects.create(
             student=student,
@@ -31,7 +30,7 @@ class TestWordModel:
         assert word.times_wrong == 0
 
     def test_word_times_wrong_increments(self):
-        """DT-06: times_wrong increments when student answers wrong."""
+        """times_wrong increments when student answers wrong."""
         student = Student.objects.create(name="John", email="john@test.com")
         word = Word.objects.create(
             student=student,
@@ -45,7 +44,7 @@ class TestWordModel:
         assert word.times_wrong == 1
 
     def test_word_difficult_words_alert(self):
-        """DT-06: word with times_wrong >= 3 is flagged as difficult."""
+        """Word with times_wrong >= 3 is flagged as difficult."""
         student = Student.objects.create(name="John", email="john@test.com")
         word = Word.objects.create(
             student=student,
@@ -57,33 +56,71 @@ class TestWordModel:
         word.save()
         assert word.times_wrong >= 3
 
-    def test_word_ease_factor_defaults_to_2_5(self):
-        """DT-02 fix: ease_factor field must exist with default 2.5 for SM-2 algorithm."""
+    def test_word_mastery_defaults_to_new(self):
+        """New words start with mastery='new'."""
         student = Student.objects.create(name="John", email="john@test.com")
         word = Word.objects.create(
             student=student,
-            word="ephemeral",
-            definition="lasting for a very short time",
-            difficulty="C1",
+            word="test",
+            definition="test def",
+            difficulty="B1",
         )
-        assert word.ease_factor == 2.5
+        assert word.mastery == "new"
+
+    def test_word_current_interval_days_defaults_to_1(self):
+        """New words start with current_interval_days=1 (first interval)."""
+        student = Student.objects.create(name="John", email="john@test.com")
+        word = Word.objects.create(
+            student=student,
+            word="test",
+            definition="test def",
+            difficulty="B1",
+        )
+        assert word.current_interval_days == 1
+
+    def test_word_review_count_defaults_to_0(self):
+        """New words start with review_count=0."""
+        student = Student.objects.create(name="John", email="john@test.com")
+        word = Word.objects.create(
+            student=student,
+            word="test",
+            definition="test def",
+            difficulty="B1",
+        )
+        assert word.review_count == 0
 
 
 @pytest.mark.django_db
-class TestSM2Algorithm:
-    def test_sm2_first_review_pass(self):
-        ef, interval = calculate_sm2(2.5, 1, 4)
-        assert ef > 2.5
-        assert interval == 6
+class TestWordSpacedRepetition:
+    """Tests for Word model spaced repetition behavior."""
 
-    def test_sm2_first_review_fail(self):
-        ef, interval = calculate_sm2(2.5, 1, 2)
-        assert ef < 2.5
-        assert interval == 1
-
-    def test_sm2_review_integration(self):
+    def test_word_next_review_date_set_on_creation(self):
+        """New word should have next_review_date set (default today)."""
         student = Student.objects.create(name="John", email="john@test.com")
-        word = Word.objects.create(student=student, word="test", definition="test def")
-        update_word_after_review(word, 4)
-        assert word.review_count == 1
-        assert word.next_review_date > date.today()
+        word = Word.objects.create(
+            student=student,
+            word="test",
+            definition="test def",
+            difficulty="B1",
+        )
+        assert word.next_review_date is not None
+
+    def test_word_unique_together_student_word(self):
+        """Student cannot have duplicate words."""
+        student = Student.objects.create(name="John", email="john@test.com")
+        Word.objects.create(student=student, word="test", definition="def1", difficulty="B1")
+        with pytest.raises(Exception):  # IntegrityError
+            Word.objects.create(student=student, word="test", definition="def2", difficulty="B1")
+
+    def test_mastery_choices(self):
+        """Mastery field should accept only valid choices."""
+        student = Student.objects.create(name="John", email="john@test.com")
+        for mastery in ["new", "learning", "mastered"]:
+            word = Word.objects.create(
+                student=student,
+                word=f"word_{mastery}",
+                definition="test",
+                difficulty="B1",
+                mastery=mastery,
+            )
+            assert word.mastery == mastery

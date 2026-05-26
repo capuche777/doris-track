@@ -42,7 +42,6 @@ def check_review_answer(word_id: int, student_answer: str) -> dict:
     student_answer = student_answer.strip()
 
     is_correct = student_answer.lower() == correct_answer.lower()
-    quality = 5 if is_correct else 0
 
     update_word_after_review(word, is_correct)
 
@@ -84,5 +83,6 @@ def update_word_after_review(word, correct: bool) -> None:
         # Wrong answer — stay at "learning" (not mastered) or reset if was "mastered"
         if word.mastery == "mastered":
             word.mastery = "learning"
+        word.times_wrong += 1
 
     word.save()
