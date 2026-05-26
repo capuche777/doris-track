@@ -10,6 +10,10 @@ services:
       - DEBUG=False
       - DJANGO_SECRET_KEY=change-me-in-production
       - ALLOWED_HOSTS=localhost,127.0.0.1
+      # Default settings module for both gunicorn and manage.py. dev pulls in
+      # debug_toolbar/django_extensions (declared in requirements.txt) and
+      # forces DEBUG=True, overriding the DEBUG/SECRET_KEY/ALLOWED_HOSTS above.
+      - DJANGO_SETTINGS_MODULE=config.settings.dev
     volumes:
       # Mount the whole repo at /app so code lives at /app/django (matches
       # the image's WORKDIR /app/django and the four-parent BASE_DIR). This
