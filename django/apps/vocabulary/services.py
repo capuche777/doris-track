@@ -1,5 +1,7 @@
 """Service layer for vocabulary app - SM-2 spaced repetition algorithm."""
 from datetime import date, timedelta
+from django.shortcuts import get_object_or_404
+from .models import Word
 
 
 def calculate_sm2(ease_factor: float, interval: int, quality: int) -> tuple:
@@ -24,6 +26,35 @@ def calculate_sm2(ease_factor: float, interval: int, quality: int) -> tuple:
     new_ease = max(1.3, new_ease)
 
     return new_ease, new_interval
+
+
+def check_review_answer(word_id: int, student_answer: str) -> dict:
+    """
+    Validate a student's answer to a vocabulary review question.
+    DT-06: increments times_wrong counter when student answers incorrectly.
+    
+    Returns: {
+        "correct": bool,
+        "correct_answer": str,
+        "next_review": date,
+    }
+    """
+    word = get_object_or_404(Word, id=word_id)
+    correct_answer = word.word.strip()
+    student_answer = student_answer.strip()
+    
+    # Case-insensitive, stripped comparison
+    is_correct = student_answer.lower() == correct_answer.lower()
+    quality = 5 if is_correct else 1
+    
+    # Update word after review
+    update_word_after_review(word, quality)
+    
+    return {
+        "correct": is_correct,
+        "correct_answer": correct_answer,
+        "next_review": word.next_review_date,
+    }
 
 
 def update_word_after_review(word, quality: int) -> None:

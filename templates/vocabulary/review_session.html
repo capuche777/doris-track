@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Vocabulary Review - DorisTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+    .review-container {
+        max-width: 640px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    .flashcard {
+        background: var(--color-surface, #fff);
+        border: 2px solid var(--color-navy, #1e3a5f);
+        border-radius: 16px;
+        padding: 2.5rem;
+        text-align: center;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+    .flashcard .definition-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #6B7280;
+        margin-bottom: 0.75rem;
+    }
+    .flashcard .definition {
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: var(--color-navy, #1e3a5f);
+        line-height: 1.5;
+        margin-bottom: 1.5rem;
+    }
+    .flashcard .word-prompt {
+        font-size: 0.875rem;
+        color: #6B7280;
+        margin-bottom: 0.5rem;
+    }
+    .flashcard .word-display {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--color-gold, #D4A843);
+        margin-bottom: 1.5rem;
+    }
+    .flashcard input[type="text"] {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        font-size: 1.125rem;
+        border: 2px solid #E5E7EB;
+        border-radius: 10px;
+        text-align: center;
+        transition: border-color 0.2s;
+    }
+    .flashcard input[type="text"]:focus {
+        outline: none;
+        border-color: var(--color-gold, #D4A843);
+    }
+    .flashcard .btn { margin-top: 1rem; width: 100%; padding: 0.875rem; font-size: 1rem; }
+
+    .feedback {
+        padding: 1.25rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    .feedback.correct {
+        background: #D1FAE5;
+        border: 2px solid #059669;
+        color: #065F46;
+    }
+    .feedback.wrong {
+        background: #FEE2E2;
+        border: 2px solid #DC2626;
+        color: #7F1D1D;
+    }
+    .feedback .correct-answer {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-top: 0.5rem;
+    }
+
+    .progress-bar {
+        background: #E5E7EB;
+        border-radius: 8px;
+        height: 8px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    .progress-bar .fill {
+        height: 100%;
+        background: var(--color-gold, #D4A843);
+        border-radius: 8px;
+        transition: width 0.3s ease;
+    }
+    .progress-text {
+        text-align: center;
+        font-size: 0.875rem;
+        color: #6B7280;
+        margin-bottom: 2rem;
+    }
+
+    .stats-bar {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: #F9FAFB;
+        border-radius: 12px;
+    }
+    .stats-bar .stat { text-align: center; }
+    .stats-bar .stat .value { font-size: 1.5rem; font-weight: 700; color: var(--color-navy, #1e3a5f); }
+    .stats-bar .stat .label { font-size: 0.75rem; text-transform: uppercase; color: #6B7280; }
+    .stats-bar .stat.correct .value { color: #059669; }
+    .stats-bar .stat.wrong .value { color: #DC2626; }
+
+    .empty-state { text-align: center; padding: 4rem 2rem; }
+    .empty-state h2 { margin-bottom: 0.5rem; color: var(--color-navy, #1e3a5f); }
+    .empty-state p { color: #6B7280; margin-bottom: 1.5rem; }
+
+    .difficult-alert {
+        background: #FEE2E2;
+        border: 2px solid #DC2626;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .difficult-alert svg { flex-shrink: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-container">
+    {% if student and current_word %}
+        {# Progress #}
+        <div class="progress-text">Word {{ current_index|add:1 }} — {{ total }} answered</div>
+        <div class="progress-bar">
+            <div class="fill" style="width: {% widthratio current_index total 100 %}%"></div>
+        </div>
+
+        {# Stats #}
+        <div class="stats-bar">
+            <div class="stat correct">
+                <div class="value">{{ correct }}</div>
+                <div class="label">Correct</div>
+            </div>
+            <div class="stat wrong">
+                <div class="value">{{ wrong }}</div>
+                <div class="label">Wrong</div>
+            </div>
+        </div>
+
+        {# Difficult words alert #}
+        {% if current_word.times_wrong >= 3 %}
+        <div class="difficult-alert">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="#DC2626"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            <span>This word has been wrong {{ current_word.times_wrong }} times — difficult word!</span>
+        </div>
+        {% endif %}
+
+        {# Flashcard #}
+        <div class="flashcard">
+            <div class="definition-label">Definition</div>
+            <div class="definition">{{ current_word.definition }}</div>
+
+            {% if current_word.example_sentence %}
+            <div class="word-prompt">Example:</div>
+            <div class="word-display">{{ current_word.example_sentence }}</div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'vocabulary:review_session' %}">
+                {% csrf_token %}
+                <input type="hidden" name="word_id" value="{{ current_word.id }}">
+                <input type="hidden" name="current_index" value="{{ current_index }}">
+                <input type="text" name="answer" placeholder="Type the word..." autocomplete="off" autofocus>
+                <button type="submit" class="btn btn-primary">Check Answer</button>
+            </form>
+        </div>
+
+    {% else %}
+        {# No words available #}
+        <div class="empty-state">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style="margin: 0 auto 1rem; opacity: 0.4;">
+                <circle cx="32" cy="32" r="28" stroke="#6B7280" stroke-width="2" fill="none"/>
+                <path d="M20 32h24M32 20v24" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <h2>No words to review</h2>
+            <p>Great job! All your words are mastered or not yet due for review.</p>
+            <a href="{% url 'vocabulary:difficult_words' %}" class="btn btn-secondary">View Difficult Words</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
