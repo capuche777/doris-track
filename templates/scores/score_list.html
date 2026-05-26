@@ -30,6 +30,16 @@
   }
   .action-row { display: flex; gap: 0.75rem; margin: 1.5rem 0; }
   .latest-summary { background: #F9F7F4; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+  .trend-up { color: #22C55E; font-weight: 700; margin-left: 2px; }
+  .trend-down { color: #EF4444; font-weight: 700; margin-left: 2px; }
+  .trend-stable { color: #6B7280; font-weight: 700; margin-left: 2px; }
+  .latest-scores-row { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+  .latest-skill {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.95rem;
+  }
 </style>
 {% endblock %}
 
@@ -48,12 +58,18 @@
 {% if latest %}
 <div class="latest-summary">
   <strong>Latest scores for {{ student.name }}:</strong>
-  <div style="display:flex; gap:1.5rem; margin-top:0.5rem; flex-wrap:wrap;">
-    <span><span class="skill-dot" style="background:#3B82F6;"></span>Pronunciation: <strong>{{ latest.pronunciation|default:"--" }}</strong></span>
-    <span><span class="skill-dot" style="background:#22C55E;"></span>Fluency: <strong>{{ latest.fluency|default:"--" }}</strong></span>
-    <span><span class="skill-dot" style="background:#F97316;"></span>Intonation: <strong>{{ latest.intonation|default:"--" }}</strong></span>
-    <span><span class="skill-dot" style="background:#EF4444;"></span>Grammar: <strong>{{ latest.grammar|default:"--" }}</strong></span>
-    <span><span class="skill-dot" style="background:#A855F7;"></span>Vocabulary: <strong>{{ latest.vocabulary|default:"--" }}</strong></span>
+  <div class="latest-scores-row" style="margin-top:0.5rem;">
+    {% for skill, value in latest.items %}
+    <span class="latest-skill">
+      <span class="skill-dot" style="background:{{ skill_colors|get_item:skill }};"></span>
+      {{ skill|capfirst }}: <strong>{{ value }}</strong>
+      {% with trend=trends|get_item:skill %}
+        {% if trend == "up" %}<span class="trend-up">&#8593;</span>{% endif %}
+        {% if trend == "down" %}<span class="trend-down">&#8595;</span>{% endif %}
+        {% if trend == "stable" %}<span class="trend-stable">&#8594;</span>{% endif %}
+      {% endwith %}
+    </span>
+    {% endfor %}
   </div>
 </div>
 {% endif %}

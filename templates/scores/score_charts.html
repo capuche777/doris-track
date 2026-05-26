@@ -12,9 +12,10 @@
     margin-bottom: 1.5rem;
     color: #991B1B;
   }
-  .chart-container { position: relative; height: 400px; margin: 2rem 0; }
+  .chart-container { position: relative; height: 450px; margin: 2rem 0; }
   .skill-legend { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
   .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .baseline-legend { margin-top: 0.5rem; font-size: 0.85rem; }
 </style>
 {% endblock %}
 
@@ -38,6 +39,10 @@
   <span class="legend-item"><span class="legend-dot" style="background:#F97316;"></span>Intonation</span>
   <span class="legend-item"><span class="legend-dot" style="background:#EF4444;"></span>Grammar</span>
   <span class="legend-item"><span class="legend-dot" style="background:#A855F7;"></span>Vocabulary</span>
+  <span class="legend-item">
+    <span style="display:inline-block;width:20px;height:2px;background:#6B7280;border-top:2px dashed #6B7280;vertical-align:middle;"></span>
+    Baseline (avg)
+  </span>
 </div>
 {% endif %}
 
@@ -59,20 +64,24 @@
 {% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 <script>
-const chartData = {{ chart_data|safe }};
-if (chartData && document.getElementById('scoreChart')) {
+const rawData = {{ chart_data|safe }};
+if (rawData && document.getElementById('scoreChart')) {
   new Chart(document.getElementById('scoreChart'), {
     type: 'line',
     data: {
-      labels: chartData.labels,
-      datasets: chartData.datasets,
+      labels: rawData.labels,
+      datasets: rawData.datasets,
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
         legend: { position: 'bottom' },
+        annotation: {
+          annotations: rawData.annotations || {},
+        },
       },
       scales: {
         y: {

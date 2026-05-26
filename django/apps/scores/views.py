@@ -1,6 +1,6 @@
 """Views for scores app."""
 import json
-from datetime import date
+from datetime import date, timedelta
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -8,7 +8,7 @@ from django.contrib import messages
 from apps.profiles.models import Student
 from .models import Assessment, Score
 from .services import record_assessment, detect_declining_skills
-from .selectors import get_assessments, get_latest_scores
+from .selectors import get_assessments, get_latest_scores, get_score_trends
 
 
 SKILL_COLORS = {
@@ -20,6 +20,42 @@ SKILL_COLORS = {
 }
 
 
+def _get_trends(student_id: int) -> dict:
+    """
+    Compute trend direction per skill: 'up', 'down', or 'stable'.
+    Compares last 7 days avg vs previous 7 days avg.
+    """
+    from django.db.models import Avg
+    today = date.today()
+    recent_start = today - timedelta(days=6)
+    previous_start = today - timedelta(days=13)
+    previous_end = today - timedelta(days=7)
+
+    trends = {}
+    for skill, _ in Score.SKILL_CHOICES:
+        recent = Score.objects.filter(
+            assessment__student_id=student_id,
+            skill=skill,
+            assessment__date__range=(recent_start, today),
+        ).aggregate(avg=Avg("value"))["avg"]
+
+        previous = Score.objects.filter(
+            assessment__student_id=student_id,
+            skill=skill,
+            assessment__date__range=(previous_start, previous_end),
+        ).aggregate(avg=Avg("value"))["avg"]
+
+        if recent is None or previous is None:
+            trends[skill] = "stable"
+        elif recent - previous >= 3:
+            trends[skill] = "up"
+        elif previous - recent >= 3:
+            trends[skill] = "down"
+        else:
+            trends[skill] = "stable"
+    return trends
+
+
 def score_list_view(request):
     """List all assessments for the student."""
     student = Student.objects.first()
@@ -29,6 +65,7 @@ def score_list_view(request):
     assessments = get_assessments(student.id)
     latest = get_latest_scores(student.id)
     declines = detect_declining_skills(student.id)
+    trends = _get_trends(student.id)
 
     # Build latest scores dict with skill ordering
     assessment_data = []
@@ -44,6 +81,7 @@ def score_list_view(request):
         "decline_skills": declines,
         "assessment_data": assessment_data,
         "skill_colors": SKILL_COLORS,
+        "trends": trends,
     })
 
 
@@ -101,7 +139,7 @@ def score_charts_view(request):
     latest = get_latest_scores(student.id)
     declines = detect_declining_skills(student.id)
 
-    # Collect all dates across all skills
+    # Compute baseline (overall average across all scores for each date range)
     all_scores_qs = (
         Score.objects
         .filter(assessment__student_id=student.id)
@@ -117,7 +155,6 @@ def score_charts_view(request):
     chart_datasets = []
     for skill, color in SKILL_COLORS.items():
         skill_qs = all_scores_qs.filter(skill=skill)
-        # Map date -> value for quick lookup
         date_to_value = {s.assessment.date: s.value for s in skill_qs}
         values = [date_to_value.get(d, None) for d in date_vals]
         chart_datasets.append({
@@ -130,9 +167,42 @@ def score_charts_view(request):
             "pointRadius": 4,
         })
 
+    # Baseline: average of all scores across all skills for each date
+    baseline_values = []
+    for d in date_vals:
+        day_scores = [s.value for s in all_scores_qs if s.assessment.date == d]
+        baseline_values.append(round(sum(day_scores) / len(day_scores), 1) if day_scores else None)
+
+    chart_datasets.append({
+        "label": "Baseline",
+        "data": baseline_values,
+        "borderColor": "#6B7280",
+        "borderDash": [5, 5],
+        "backgroundColor": "transparent",
+        "fill": False,
+        "tension": 0,
+        "pointRadius": 0,
+        "borderWidth": 2,
+    })
+
+    # Declining zones: annotate red background bands where skills are declining
+    annotations = {}
+    if declines:
+        for skill, info in declines.items():
+            color = SKILL_COLORS.get(skill, "#EF4444")
+            annotations[f"decline_{skill}"] = {
+                "type": "box",
+                "xMin": 0,
+                "xMax": len(date_labels) - 1,
+                "backgroundColor": color + "22",
+                "borderColor": "transparent",
+                "borderWidth": 0,
+            }
+
     chart_data = {
         "labels": date_labels,
         "datasets": chart_datasets,
+        "annotations": annotations,
     }
 
     return render(request, "scores/score_charts.html", {
