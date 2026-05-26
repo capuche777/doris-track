@@ -12,7 +12,7 @@ services:
       - DJANGO_SECRET_KEY=change-me-in-production
       - ALLOWED_HOSTS=localhost,127.0.0.1
     volumes:
-      - ./django:/app/django
+      - ./django:/app
       - ./templates:/app/templates
       - ./static:/app/static
     restart: unless-stopped
