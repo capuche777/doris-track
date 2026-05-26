@@ -28,6 +28,7 @@ class Word(models.Model):
     mastery = models.CharField(max_length=10, choices=MASTERY_CHOICES, default="new")
     next_review_date = models.DateField(null=True, blank=True)
     times_wrong = models.IntegerField(default=0, help_text="Times student answered this word incorrectly")
+    ease_factor = models.FloatField(default=2.5, help_text="SM-2 ease factor (starting at 2.5, adjusted by review quality)")
     current_interval_days = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

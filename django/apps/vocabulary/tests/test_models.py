@@ -57,6 +57,17 @@ class TestWordModel:
         word.save()
         assert word.times_wrong >= 3
 
+    def test_word_ease_factor_defaults_to_2_5(self):
+        """DT-02 fix: ease_factor field must exist with default 2.5 for SM-2 algorithm."""
+        student = Student.objects.create(name="John", email="john@test.com")
+        word = Word.objects.create(
+            student=student,
+            word="ephemeral",
+            definition="lasting for a very short time",
+            difficulty="C1",
+        )
+        assert word.ease_factor == 2.5
+
 
 @pytest.mark.django_db
 class TestSM2Algorithm:
