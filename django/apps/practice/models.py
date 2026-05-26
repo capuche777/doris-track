@@ -21,7 +21,7 @@ class PracticeSession(models.Model):
     duration_minutes = models.IntegerField(default=0)
     notes = models.TextField(blank=True)
     words_learned = models.ManyToManyField(
-        "apps.vocabulary.Word", blank=True, related_name="practice_sessions"
+        "vocabulary.Word", blank=True, related_name="practice_sessions"
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
