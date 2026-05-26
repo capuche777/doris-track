@@ -1,6 +1,7 @@
 """Views for practice app — DT-08."""
 from datetime import date, timedelta
 from django.shortcuts import render, redirect
+import json
 from django.contrib import messages
 
 from apps.profiles.models import Student
@@ -92,6 +93,7 @@ def practice_heatmap_view(request):
     return render(request, "practice/practice_heatmap.html", {
         "student": student,
         "heatmap_data": heatmap_data,
+        "heatmap_data_json": json.dumps(heatmap_data),
         "streak": streak,
         "stats": stats,
         "year": year,

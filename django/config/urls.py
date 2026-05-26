@@ -11,6 +11,7 @@ urlpatterns = [
     path("vocabulary/", include("apps.vocabulary.urls")),
     path("quiz/", include("apps.quiz.urls")),
     path("grammar/", include("apps.grammar.urls")),
+    path("practice/", include("apps.practice.urls")),
 ]
 
 if settings.DEBUG:

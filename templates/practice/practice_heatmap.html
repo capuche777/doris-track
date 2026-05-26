@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Practice Heatmap — DorisTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+  .heatmap-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .streak-display {
+    background: linear-gradient(135deg, #065F46, #059669);
+    color: white;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+  }
+  .streak-item { text-align: center; }
+  .streak-number { font-size: 2rem; font-weight: 800; }
+  .streak-label { font-size: 0.8rem; opacity: 0.85; }
+  .year-selector { display: flex; gap: 0.5rem; align-items: center; }
+  .year-btn {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #D1D5DB;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: none;
+    color: var(--color-navy);
+  }
+  .year-btn:hover { background: var(--color-gold); color: var(--color-navy); border-color: var(--color-gold); }
+  .year-btn.active { background: var(--color-navy); color: var(--color-bone); border-color: var(--color-navy); }
+
+  /* GitHub-style heatmap: 53 weeks x 7 days */
+  .heatmap-container { overflow-x: auto; }
+  .heatmap-wrapper { display: flex; gap: 0.5rem; min-width: 800px; }
+  .day-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: #6B7280;
+    padding: 4px 0;
+    height: 120px;
+  }
+  .day-labels span { height: 17px; line-height: 17px; }
+  .heatmap-grid {
+    display: grid;
+    grid-template-rows: repeat(7, 17px);
+    grid-auto-flow: column;
+    grid-auto-columns: 17px;
+    gap: 3px;
+  }
+  .month-labels {
+    display: flex;
+    gap: 0;
+    font-size: 0.75rem;
+    color: #6B7280;
+    margin-bottom: 0.25rem;
+    padding-left: 2rem;
+    min-width: 800px;
+  }
+  .month-label { text-align: left; }
+  .heatmap-cell {
+    width: 17px;
+    height: 17px;
+    border-radius: 3px;
+    background: #EBEDF0;
+    cursor: pointer;
+    position: relative;
+  }
+  .heatmap-cell:hover { outline: 2px solid #0366D6; }
+  /* Intensity levels */
+  .level-1 { background: #9BE9A8; }
+  .level-2 { background: #40C463; }
+  .level-3 { background: #30A14E; }
+  .level-4 { background: #216E39; }
+  /* Tooltip */
+  .tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-navy);
+    color: white;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+  }
+  .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--color-navy);
+  }
+
+  /* Legend */
+  .heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: #6B7280;
+  }
+  .legend-scale { display: flex; gap: 3px; }
+  .legend-cell { width: 17px; height: 17px; border-radius: 3px; }
+
+  /* Stats below heatmap */
+  .heatmap-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .stat-box {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    min-width: 120px;
+  }
+  .stat-val { font-size: 1.4rem; font-weight: 700; }
+  .stat-lbl { font-size: 0.78rem; color: #6B7280; }
+
+  .empty-state { text-align: center; padding: 2rem; color: #6B7280; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="heatmap-header">
+  <div class="streak-display">
+    <div class="streak-item">
+      <div class="streak-number">🔥 {{ streak|default:0 }}</div>
+      <div class="streak-label">day streak</div>
+    </div>
+    <div class="streak-item">
+      <div class="streak-number">{{ stats.total_sessions|default:0 }}</div>
+      <div class="streak-label">total sessions</div>
+    </div>
+    <div class="streak-item">
+      <div class="streak-number">{{ stats.total_minutes|default:0 }}</div>
+      <div class="streak-label">total minutes</div>
+    </div>
+  </div>
+  <div class="year-selector">
+    {% for y in years %}
+    <a href="?year={{ y }}" class="year-btn{% if y == year %} active{% endif %}">{{ y }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+{% if not student %}
+<div class="empty-state"><p>No student found.</p></div>
+{% else %}
+<div class="heatmap-container">
+  <div class="month-labels" id="monthLabels"></div>
+  <div class="heatmap-wrapper">
+    <div class="day-labels">
+      <span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span>Sun</span>
+    </div>
+    <div class="heatmap-grid" id="heatmapGrid"></div>
+  </div>
+</div>
+
+<div class="heatmap-legend">
+  <span>Less:</span>
+  <div class="legend-scale">
+    <div class="legend-cell" style="background:#EBEDF0;"></div>
+    <div class="legend-cell level-1"></div>
+    <div class="legend-cell level-2"></div>
+    <div class="legend-cell level-3"></div>
+    <div class="legend-cell level-4"></div>
+  </div>
+  <span>More:</span>
+</div>
+
+<div class="heatmap-stats">
+  <div class="stat-box"><div class="stat-val">{{ stats.total_minutes|default:0 }}</div><div class="stat-lbl">minutes this year</div></div>
+  <div class="stat-box"><div class="stat-val">{{ stats.total_sessions|default:0 }}</div><div class="stat-lbl">sessions this year</div></div>
+  <div class="stat-box"><div class="stat-val">{{ stats.avg_duration|default:0 }}</div><div class="stat-lbl">avg session (min)</div></div>
+</div>
+{% endif %}
+
+<script>
+(function() {
+  var heatmapData = {{ heatmap_data_json|safe }};
+  var year = {{ year }};
+
+  function getLevel(minutes) {
+    if (minutes === 0) return '';
+    if (minutes <= 15) return 'level-1';
+    if (minutes <= 30) return 'level-2';
+    if (minutes <= 60) return 'level-3';
+    return 'level-4';
+  }
+
+  function getDayOfWeek(dateStr) {
+    // 0=Sun, 1=Mon, ... 6=Sat
+    return new Date(dateStr).getDay();
+  }
+
+  function isoDayOfWeek(dateStr) {
+    // Mon=0, Sun=6
+    var d = new Date(dateStr);
+    return (d.getDay() + 6) % 7;
+  }
+
+  // Build 53 weeks x 7 days grid starting from Monday of week 1
+  var grid = document.getElementById('heatmapGrid');
+  var monthLabels = document.getElementById('monthLabels');
+
+  // First day of year
+  var firstDay = new Date(year, 0, 1);
+  // Adjust to Monday of that week (ISO week starts Monday)
+  var startDate = new Date(firstDay);
+  var dow = (startDate.getDay() + 6) % 7; // Mon=0
+  startDate.setDate(startDate.getDate() - dow);
+
+  var currentMonth = -1;
+  var monthLabelSpans = [];
+
+  for (var week = 0; week < 53; week++) {
+    var weekHasData = false;
+    for (var day = 0; day < 7; day++) {
+      var cellDate = new Date(startDate);
+      cellDate.setDate(startDate.getDate() + week * 7 + day);
+
+      var dateStr = cellDate.getFullYear() + '-' +
+        String(cellDate.getMonth() + 1).padStart(2, '0') + '-' +
+        String(cellDate.getDate()).padStart(2, '0');
+
+      var inYear = cellDate.getFullYear() === year;
+      var minutes = inYear ? (heatmapData[dateStr] || 0) : 0;
+
+      if (inYear && cellDate.getMonth() !== currentMonth) {
+        currentMonth = cellDate.getMonth();
+        var label = ['', 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][currentMonth + 1];
+        monthLabelSpans.push({ week: week, label: label });
+      }
+
+      var cell = document.createElement('div');
+      cell.className = 'heatmap-cell' + (inYear ? ' ' + getLevel(minutes) : '');
+      cell.dataset.date = dateStr;
+      cell.dataset.minutes = minutes;
+
+      if (inYear) {
+        var tooltip = document.createElement('div');
+        tooltip.className = 'tooltip';
+        tooltip.textContent = dateStr + ': ' + minutes + ' min';
+        cell.appendChild(tooltip);
+        cell.addEventListener('mouseenter', function() {
+          this.querySelector('.tooltip').style.display = 'block';
+        });
+        cell.addEventListener('mouseleave', function() {
+          this.querySelector('.tooltip').style.display = 'none';
+        });
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  // Month labels
+  monthLabelSpans.forEach(function(item) {
+    var span = document.createElement('span');
+    span.className = 'month-label';
+    span.style.marginLeft = (item.week * 20) + 'px';
+    span.textContent = item.label;
+    monthLabels.appendChild(span);
+  });
+})();
+</script>
+{% endblock %}

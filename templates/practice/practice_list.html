@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Practice Log — DorisTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+  .streak-banner {
+    background: linear-gradient(135deg, #065F46, #059669);
+    color: white;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .streak-number { font-size: 2.5rem; font-weight: 800; }
+  .streak-label { font-size: 0.9rem; opacity: 0.9; }
+  .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .stat-card {
+    background: var(--color-bone);
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    min-width: 120px;
+  }
+  .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--color-navy); }
+  .stat-label { font-size: 0.8rem; color: #6B7280; }
+  .filter-bar {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .filter-bar input, .filter-bar select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  .sessions-table { width: 100%; border-collapse: collapse; }
+  .sessions-table th {
+    background: var(--color-navy);
+    color: var(--color-bone);
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    font-size: 0.85rem;
+  }
+  .sessions-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #E5E7EB; }
+  .sessions-table tr:hover { background: #F9F7F4; }
+  .type-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .type-vocabulary { background: #DBEAFE; color: #1E40AF; }
+  .type-writing { background: #FEF3C7; color: #92400E; }
+  .type-idioms { background: #EDE9FE; color: #5B21B6; }
+  .type-grammar { background: #FEE2E2; color: #991B1B; }
+  .type-conversation { background: #D1FAE5; color: #065F46; }
+  .type-quiz { background: #F3E8FF; color: #7E22CE; }
+  .empty-state { text-align: center; padding: 3rem; color: #6B7280; }
+  .action-row { display: flex; gap: 0.75rem; margin: 1.5rem 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="streak-banner">
+  <div>
+    <div class="streak-number">🔥 {{ streak|default:0 }}</div>
+    <div class="streak-label">day streak</div>
+  </div>
+  <div style="margin-left: auto; display:flex; gap:0.75rem;">
+    <a href="{% url 'practice:heatmap' %}" class="btn" style="background:rgba(255,255,255,0.2);color:white;">View Heatmap</a>
+    <a href="{% url 'practice:add' %}" class="btn" style="background:var(--color-gold);color:var(--color-navy);">+ Log Session</a>
+  </div>
+</div>
+
+{% if stats %}
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-value">{{ stats.total_minutes }}</div><div class="stat-label">Total minutes</div></div>
+  <div class="stat-card"><div class="stat-value">{{ stats.total_sessions }}</div><div class="stat-label">Sessions</div></div>
+  <div class="stat-card"><div class="stat-value">{{ stats.avg_duration }}</div><div class="stat-label">Avg duration</div></div>
+  {% for ptype, minutes in stats.by_type.items %}
+  <div class="stat-card"><div class="stat-value">{{ minutes }}</div><div class="stat-label">{{ ptype }}</div></div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if not student %}
+<div class="empty-state"><p>No student found. Please create a student profile first.</p></div>
+{% else %}
+<div class="filter-bar">
+  <form method="get" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+    <label style="font-size:0.85rem;font-weight:600;">Filters:</label>
+    <input type="date" name="date_from" value="{{ filters.date_from }}" placeholder="From date">
+    <input type="date" name="date_to" value="{{ filters.date_to }}" placeholder="To date">
+    <select name="practice_type">
+      <option value="">All types</option>
+      {% for pt in practice_types %}
+      <option value="{{ pt }}" {% if filters.practice_type == pt %}selected{% endif %}>{{ pt|capfirst }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary" style="padding:0.5rem 1rem;">Filter</button>
+    <a href="{% url 'practice:list' %}" class="btn" style="padding:0.5rem 1rem;background:#E5E7EB;color:var(--color-navy);">Clear</a>
+  </form>
+</div>
+
+{% if not sessions %}
+<div class="empty-state">
+  <p>No practice sessions found.</p>
+  <a href="{% url 'practice:add' %}" class="btn btn-primary" style="margin-top:1rem;">Log your first session</a>
+</div>
+{% else %}
+<div class="action-row">
+  <a href="{% url 'practice:add' %}" class="btn btn-primary">+ Log Session</a>
+</div>
+
+<table class="sessions-table">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Type</th>
+      <th>Duration</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for session in sessions %}
+    <tr>
+      <td style="white-space:nowrap;">{{ session.date|date:"Y-m-d" }}</td>
+      <td><span class="type-badge type-{{ session.practice_type }}">{{ session.practice_type }}</span></td>
+      <td>{{ session.duration_minutes }} min</td>
+      <td style="color:#4B5563;font-size:0.9rem;">{{ session.notes|default:"—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Log Practice Session — DorisTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.9rem; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: var(--font-body);
+  }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .btn-row { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+  .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+  .type-option {
+    padding: 0.6rem;
+    border: 2px solid #E5E7EB;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: capitalize;
+    transition: all 0.15s;
+  }
+  .type-option:hover { border-color: var(--color-gold); }
+  .type-option.selected { border-color: var(--color-gold); background: #FEF9EE; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-card">
+  <h1 style="margin-bottom:1.5rem;">Log Practice Session</h1>
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div style="padding:0.75rem;margin-bottom:1rem;border-radius:6px;{% if msg.tags == 'error' %}background:#FEE2E2;color:#991B1B{% else %}background:#D1FAE5;color:#065F46{% endif %}">{{ msg }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-row">
+      <div class="form-group">
+        <label for="date">Date</label>
+        <input type="date" id="date" name="date" value="{{ today|date:'Y-m-d' }}" required>
+      </div>
+      <div class="form-group">
+        <label for="duration_minutes">Duration (minutes)</label>
+        <input type="number" id="duration_minutes" name="duration_minutes" min="1" max="480" placeholder="e.g. 30" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Practice Type</label>
+      <input type="hidden" name="practice_type" id="practice_type_input" value="">
+      <div class="type-grid">
+        {% for pt in practice_types %}
+        <div class="type-option{% if forloop.first %} selected{% endif %}" data-type="{{ pt }}" onclick="selectType('{{ pt }}')">{{ pt }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="notes">Notes (optional)</label>
+      <textarea id="notes" name="notes" placeholder="What did you practice? Any observations?">{{ notes|default:"" }}</textarea>
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" class="btn btn-primary">Save Session</button>
+      <a href="{% url 'practice:list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+function selectType(type) {
+  document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
+  document.querySelector('[data-type="' + type + '"]').classList.add('selected');
+  document.getElementById('practice_type_input').value = type;
+}
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  var first = document.querySelector('.type-option');
+  if (first) document.getElementById('practice_type_input').value = first.getAttribute('data-type');
+});
+</script>
+{% endblock %}
