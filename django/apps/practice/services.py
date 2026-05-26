@@ -1,15 +1,70 @@
-"""Service layer for practice app."""
+"""Service layer for practice app — DT-08."""
+from datetime import date, timedelta
+from collections import defaultdict
+from .models import PracticeSession
 
 
-def create_session(student, practice_type, duration_minutes, notes="", date=None):
-    """Create a practice session."""
-    from datetime import date as d
-    if date is None:
-        date = d.today()
+def log_practice(student, practice_type: str, duration_minutes: int, notes: str = "", date_obj: date = None) -> PracticeSession:
+    """
+    Log a new practice session. DT-08.
+    Returns the created PracticeSession instance.
+    """
+    if date_obj is None:
+        date_obj = date.today()
     return PracticeSession.objects.create(
         student=student,
-        date=date,
         practice_type=practice_type,
         duration_minutes=duration_minutes,
         notes=notes,
+        date=date_obj,
     )
+
+
+def get_practice_streak(student) -> int:
+    """
+    Calculate the current consecutive-day practice streak for a student.
+    Counts days with at least one practice session, ending at today.
+    DT-08.
+    """
+    today = date.today()
+    streak = 0
+    check_date = today
+
+    # If no practice today, start checking from yesterday
+    has_today = PracticeSession.objects.filter(student=student, date=today).exists()
+    if not has_today:
+        check_date = today - timedelta(days=1)
+
+    # Walk backwards counting consecutive days
+    while True:
+        if PracticeSession.objects.filter(student=student, date=check_date).exists():
+            streak += 1
+            check_date -= timedelta(days=1)
+        else:
+            break
+
+    return streak
+
+
+def get_practice_stats(student, days: int = 30) -> dict:
+    """
+    Get aggregate practice statistics for the student over the last N days. DT-08.
+    Returns: {total_minutes, total_sessions, avg_duration, by_type: {type: minutes}}
+    """
+    start = date.today() - timedelta(days=days)
+    sessions = PracticeSession.objects.filter(student=student, date__gte=start)
+    
+    total_minutes = sum(s.duration_minutes for s in sessions)
+    total_sessions = sessions.count()
+    avg_duration = round(total_minutes / total_sessions, 1) if total_sessions > 0 else 0
+
+    by_type = defaultdict(int)
+    for s in sessions:
+        by_type[s.practice_type] += s.duration_minutes
+
+    return {
+        "total_minutes": total_minutes,
+        "total_sessions": total_sessions,
+        "avg_duration": avg_duration,
+        "by_type": dict(by_type),
+    }

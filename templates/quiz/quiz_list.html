@@ -26,16 +26,16 @@
                 {{ quiz.questions.count }} questions •
                 Created {{ quiz.created_at|date:"M d, Y" }}
             </div>
-            <p><a href="/quiz/results/{{ quiz.id }}/">View results →</a></p>
+            <p><a href="{% url 'quiz:quiz_results' quiz.id %}">View results →</a></p>
         </div>
         {% endfor %}
     {% else %}
         <div class="no-quizzes">
             <p>No quizzes yet.</p>
-            <p><a href="/quiz/take/">Take your first quiz →</a></p>
+            <p><a href="{% url 'quiz:quiz_take' %}">Take your first quiz →</a></p>
         </div>
     {% endif %}
 
-    <p><a href="/">← Back to Dashboard</a></p>
+    <p><a href="{% url 'dashboard:home' %}">← Back to Dashboard</a></p>
 </body>
 </html>
