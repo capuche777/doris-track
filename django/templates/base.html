@@ -25,6 +25,7 @@
                 DorisTrack
             </a>
 
+            {% if user.is_authenticated %}
             <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.getElementById('siteHeader').classList.toggle('nav-open')">☰</button>
 
             <div class="nav">
@@ -35,7 +36,12 @@
                 <a href="{% url 'practice:list' %}" class="nav-item {% if '/practice' in request.path %}active{% endif %}">Practice</a>
                 <a href="{% url 'quiz:quiz_list' %}" class="nav-item {% if '/quiz' in request.path %}active{% endif %}">Quiz</a>
                 <a href="{% url 'profiles:student_profile' %}" class="nav-item {% if '/profile' in request.path %}active{% endif %}">Profile</a>
+                <form action="{% url 'profiles:logout' %}" method="post" class="nav-logout">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost btn-sm">Log out</button>
+                </form>
             </div>
+            {% endif %}
         </nav>
     </header>
 

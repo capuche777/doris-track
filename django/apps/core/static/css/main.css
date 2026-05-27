@@ -379,6 +379,10 @@ textarea { min-height: 96px; resize: vertical; }
 .pill--current { background: var(--gold); color: var(--navy); }
 .pill--target  { background: var(--navy); color: var(--bone); }
 
+/* -------------------------------------------------------------------- auth */
+.auth-page { display: flex; justify-content: center; padding: 3rem 0; }
+.auth-card { width: 100%; max-width: 420px; }
+
 /* ------------------------------------------------------------------ alerts */
 .alert {
     display: flex;

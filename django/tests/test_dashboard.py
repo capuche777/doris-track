@@ -163,20 +163,27 @@ class TestDashboardSelectors:
 class TestDashboardView:
     """Test the dashboard view returns 200 and all required context."""
 
-    def test_dashboard_view_200(self, client):
+    def test_dashboard_view_200(self, client, django_user_model):
         from apps.core.selectors import get_student_by_request
         # Create a student so dashboard has data
         student = Student.objects.create(name="Test Student", email="test@example.com")
         Assessment.objects.create(student=student, date=date.today())
         Word.objects.create(student=student, word="test", definition="a test")
 
+        # Login is required site-wide; authenticate as the student's user.
+        client.force_login(
+            django_user_model.objects.create_user("t1", email="test@example.com")
+        )
         # The view at / should work
         response = client.get("/")
         assert response.status_code == 200
 
-    def test_dashboard_context_data(self, client):
+    def test_dashboard_context_data(self, client, django_user_model):
         """Verify dashboard template loads with all sections."""
         student = Student.objects.create(name="Test", email="test2@example.com")
+        client.force_login(
+            django_user_model.objects.create_user("t2", email="test2@example.com")
+        )
         response = client.get("/")
         assert response.status_code == 200
         # Template should render without errors
