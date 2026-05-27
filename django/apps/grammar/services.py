@@ -40,10 +40,12 @@ def get_common_mistakes(student, period_days=30):
         if corr.category not in examples:
             examples[corr.category] = corr.student_mistake
 
+    label_map = dict(Correction.CATEGORY_CHOICES)
     result = []
     for item in sorted(corrections, key=lambda x: -x["count"]):
         result.append({
             "category": item["category"],
+            "label": label_map.get(item["category"], item["category"]),
             "count": item["count"],
             "percentage": round(100 * item["count"] / total, 1),
             "example": examples.get(item["category"], ""),
