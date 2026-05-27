@@ -23,6 +23,9 @@ urlpatterns = [
     path("api/", include("apps.vocabulary.api.urls")),
     path("api/", include("apps.grammar.api.urls")),
     path("api/", include("apps.practice.api.urls")),
+    path("api/", include("apps.scores.api.urls")),
+    path("api/", include("apps.quiz.api.urls")),
+    path("api/", include("apps.dashboard.api.urls")),
     # OpenAPI schema + interactive docs.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

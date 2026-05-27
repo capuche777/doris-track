@@ -11,17 +11,15 @@
 > **Error format:** structured — `{"error": {"code": "UPPERCASE_SNAKE_CASE",
 > "message": "...", "details": {...}}}` (per project convention).
 
-> **Implementation status (2026-05-26):** Phases 1 & 2 are **implemented &
-> tested**. This covers the full vocabulary, grammar and practice surfaces —
-> `students/by-email/`; vocabulary `words/` POST, `words/due/`,
-> `words/{id}/review/`, `words/difficult/`, `words/by-mastery/{mastery}/`;
-> grammar `corrections/` GET+POST, `corrections/analytics/`,
-> `corrections/trend/{category}/`; practice `practice/` GET+POST,
-> `practice/streak/`, `practice/stats/`. Phase 3 (scores, quiz, dashboard) is
-> still spec only.
+> **Implementation status (2026-05-26):** All phases are **implemented &
+> tested** — every endpoint in this spec is live.
 >
-> Two shapes differ from the examples below, as agreed: `failure_rate` is an
-> integer, and `practice/stats` `by_type` is `{type: {sessions, minutes}}`.
+> A few response shapes differ from the examples below, as agreed:
+> - `failure_rate` is an integer (e.g. `62`, not `62.5`).
+> - `practice/stats` `by_type` is `{type: {sessions, minutes}}`.
+> - `dashboard` → `score_summary.trends` is `{skill: [[previous, latest]]}`
+>   (the two most recent scores), and `grammar_alerts[].trend` is one of
+>   `improving` / `worsening` / `stable` (recent vs. older weekly counts).
 
 ---
 

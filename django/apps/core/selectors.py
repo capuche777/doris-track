@@ -253,3 +253,116 @@ def get_next_quiz_date(student):
     # Check if quiz exists for that week
     existing = Quiz.objects.filter(student=student, week_start_date=next_monday).exists()
     return {"next_quiz_date": next_monday.isoformat(), "scheduled": existing}
+
+
+def _vocab_stats_api(student):
+    """Vocabulary stats with the API's `due_today` key name."""
+    stats = get_vocabulary_stats(student)
+    return {
+        "total_words": stats["total_words"],
+        "new": stats["new"],
+        "learning": stats["learning"],
+        "mastered": stats["mastered"],
+        "due_today": stats["words_due_today"],
+    }
+
+
+def _score_trend_pairs(student):
+    """Per-skill [[previous, latest]] from the two most recent scores."""
+    trends = {}
+    for skill, _ in Score.SKILL_CHOICES:
+        values = list(
+            Score.objects
+            .filter(assessment__student=student, skill=skill)
+            .order_by("assessment__date")
+            .values_list("value", flat=True)
+        )
+        if len(values) >= 2:
+            trends[skill] = [[values[-2], values[-1]]]
+    return trends
+
+
+def _trend_label(points):
+    """Label a weekly-count series: fewer recent mistakes = improving."""
+    if len(points) < 2:
+        return "stable"
+    mid = len(points) // 2
+    older = sum(p["count"] for p in points[:mid])
+    recent = sum(p["count"] for p in points[mid:])
+    if recent < older:
+        return "improving"
+    if recent > older:
+        return "worsening"
+    return "stable"
+
+
+def get_dashboard_for_api(student):
+    """
+    Assemble the student dashboard in the shape the Doris API exposes.
+
+    Reshapes the dashboard data for the bot: flattens practice streak and the
+    next-quiz date to scalars, adds per-word failure rate and a per-category
+    grammar trend, and exposes start_date / priority_areas.
+    """
+    from apps.grammar.services import get_mistake_trend
+    from apps.practice.services import get_practice_streak as practice_streak
+    from apps.quiz.selectors import get_quizzes
+    from apps.quiz.services import get_quiz_results_summary
+    from apps.scores.selectors import get_latest_scores
+    from apps.scores.services import detect_declining_skills
+    from apps.vocabulary.selectors import get_difficult_words_detailed
+
+    grammar_alerts = []
+    for alert in get_grammar_alerts(student):
+        trend = _trend_label(get_mistake_trend(student, alert["category"], weeks=4))
+        grammar_alerts.append(
+            {"category": alert["category"], "count": alert["count"], "trend": trend}
+        )
+
+    quiz_scores = [
+        {
+            "quiz_id": summary["quiz_id"],
+            "week": summary["week_start_date"],
+            "score": summary["score_percentage"],
+        }
+        for summary in (get_quiz_results_summary(q) for q in get_quizzes(student)[:3])
+    ]
+
+    return {
+        "student_info": {
+            "name": student.name,
+            "current_level": student.current_level,
+            "target_level": student.target_level,
+            "start_date": student.start_date.isoformat() if student.start_date else None,
+            "priority_areas": [
+                a.strip() for a in student.priority_areas.split(",") if a.strip()
+            ],
+        },
+        "score_summary": {
+            "latest": get_latest_scores(student.id),
+            "trends": _score_trend_pairs(student),
+            "declining": detect_declining_skills(student.id),
+        },
+        "vocabulary_stats": _vocab_stats_api(student),
+        "practice_streak": practice_streak(student),
+        "difficult_words": [
+            {
+                "word": item["word"].word,
+                "times_wrong": item["times_wrong"],
+                "failure_rate": item["failure_rate"],
+            }
+            for item in get_difficult_words_detailed(student, limit=5)
+        ],
+        "grammar_alerts": grammar_alerts,
+        "recent_corrections": [
+            {
+                "date": c["date"],
+                "mistake": c["mistake"],
+                "correct": c["correct"],
+                "category": c["category"],
+            }
+            for c in get_recent_corrections(student)
+        ],
+        "quiz_scores": quiz_scores,
+        "next_quiz_date": get_next_quiz_date(student)["next_quiz_date"],
+    }

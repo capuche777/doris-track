@@ -42,6 +42,18 @@ class WordAlreadyExists(APIException):
     default_code = "WORD_ALREADY_EXISTS"
 
 
+class QuizNotFound(APIException):
+    status_code = status.HTTP_404_NOT_FOUND
+    default_detail = "Quiz not found."
+    default_code = "QUIZ_NOT_FOUND"
+
+
+class QuestionNotFound(APIException):
+    status_code = status.HTTP_404_NOT_FOUND
+    default_detail = "Quiz question not found."
+    default_code = "QUESTION_NOT_FOUND"
+
+
 def api_exception_handler(exc, context):
     """
     Render DRF exceptions in the project's structured error format:
