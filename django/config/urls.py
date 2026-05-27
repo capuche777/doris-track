@@ -3,6 +3,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -13,6 +18,22 @@ urlpatterns = [
     path("quiz/", include("apps.quiz.urls")),
     path("grammar/", include("apps.grammar.urls")),
     path("practice/", include("apps.practice.urls")),
+    # REST API for the Doris bot (per-app routers share the /api/ prefix).
+    path("api/", include("apps.profiles.api.urls")),
+    path("api/", include("apps.vocabulary.api.urls")),
+    path("api/", include("apps.grammar.api.urls")),
+    # OpenAPI schema + interactive docs.
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    path(
+        "api/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
 ]
 
 if settings.DEBUG:

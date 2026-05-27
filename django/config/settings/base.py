@@ -18,6 +18,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework.authtoken",
+    "drf_spectacular",
     # Local apps
     "apps.profiles",
     "apps.vocabulary",
@@ -93,3 +95,31 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 COLOR_NAVY = "#0D1B2A"
 COLOR_GOLD = "#D4A843"
 COLOR_BONE = "#F9F7F4"
+
+# Django REST Framework — API for the Doris tutor bot.
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "EXCEPTION_HANDLER": "core.exceptions.api_exception_handler",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "DorisTrack API",
+    "DESCRIPTION": (
+        "REST API for the Doris tutor bot to track a student's vocabulary, "
+        "grammar, practice, scores and quizzes."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_SETTINGS": {"deepLinking": True},
+    # current_level and target_level share the same choice set.
+    "ENUM_NAME_OVERRIDES": {
+        "LevelEnum": "apps.profiles.models.Student.LEVEL_CHOICES",
+    },
+}
