@@ -8,19 +8,28 @@ A Django-based learning progress tracker for a single student.
 doris-track/
 ├── django/
 │   ├── manage.py
-│   ├── apps/
-│   │   ├── students/    # Core models (Student, Word, Score, Quiz, GrammarCorrection)
-│   │   └── dashboard/   # Dashboard views
-│   └── config/
-│       ├── settings/    # base.py, dev.py, prod.py
-│       ├── urls.py
-│       ├── wsgi.py
-│       └── asgi.py
-├── templates/          # Base HTML templates (D2Clic branding)
-├── static/             # CSS, JS, images
+│   ├── apps/                # One bounded context per app
+│   │   ├── profiles/        # Student + tutor (domain models)
+│   │   ├── vocabulary/      # Word bank + spaced repetition
+│   │   ├── scores/          # Assessments and scores
+│   │   ├── quiz/            # Weekly quizzes
+│   │   ├── grammar/         # Grammar corrections
+│   │   ├── practice/        # Practice sessions / streaks
+│   │   ├── dashboard/       # Aggregated dashboard view
+│   │   ├── students/        # Legacy Student <-> auth.User
+│   │   └── core/            # Cross-app selectors, templatetags, static
+│   ├── config/
+│   │   ├── settings/        # base.py, dev.py, prod.py
+│   │   ├── urls.py, wsgi.py, asgi.py
+│   ├── core/                # Cross-cutting utils (exceptions, mixins, ...)
+│   ├── templates/           # Global templates (one subfolder per feature)
+│   ├── static/              # Global static assets
+│   ├── requirements.txt     # Runtime deps
+│   └── requirements-dev.txt # Test + debug tooling
+├── Python/Dockerfile
+├── docs/                    # architecture.md, deployment.md
 ├── pytest.ini
-├── requirements.txt
-├── Dockerfile
+├── AGENTS.md
 └── docker-compose.yml
 ```
 
@@ -31,8 +40,8 @@ doris-track/
 python3 -m venv venv
 source venv/bin/activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (use requirements-dev.txt for tests + debug tooling)
+pip install -r django/requirements-dev.txt
 
 # Run migrations
 python django/manage.py migrate

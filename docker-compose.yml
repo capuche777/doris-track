@@ -3,7 +3,9 @@
 # For production with PostgreSQL:
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Python/Dockerfile
     ports:
       - "8000:8000"
     environment:
@@ -11,13 +13,12 @@ services:
       - DJANGO_SECRET_KEY=change-me-in-production
       - ALLOWED_HOSTS=localhost,127.0.0.1
       # Default settings module for both gunicorn and manage.py. dev pulls in
-      # debug_toolbar/django_extensions (declared in requirements.txt) and
+      # debug_toolbar/django_extensions (declared in requirements-dev.txt) and
       # forces DEBUG=True, overriding the DEBUG/SECRET_KEY/ALLOWED_HOSTS above.
       - DJANGO_SETTINGS_MODULE=config.settings.dev
     volumes:
-      # Mount the whole repo at /app so code lives at /app/django (matches
-      # the image's WORKDIR /app/django and the four-parent BASE_DIR). This
-      # also exposes repo-root templates/ and static/ at /app/templates and
-      # /app/static.
+      # Mount the whole repo at /app so code lives at /app/django (matches the
+      # image's WORKDIR /app/django and the three-parent BASE_DIR). templates/,
+      # static/ and db.sqlite3 now live under django/, i.e. /app/django/.
       - .:/app
     restart: unless-stopped

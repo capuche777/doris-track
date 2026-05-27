@@ -33,22 +33,26 @@ env/
 *.swp
 *.swo
 
-# Static/media files (repo-root bind mounts for local dev).
-# Anchored to root so app-level static dirs (e.g. apps/core/static) are tracked.
-/static/
-/media/
-
 # Django
 *.log
 db.sqlite3
 db.sqlite3-journal
-/staticfiles/
-/mediafiles/
+db.sqlite3.bak-*
+# Generated/runtime artifacts now live under django/. The django/static source
+# dir and app-level static (e.g. apps/core/static) stay tracked.
+/django/staticfiles/
+/django/media/
+/django/mediafiles/
 
 # Testing
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Claude / agent files (Rule 14.8)
+CLAUDE.md
+CLAUDE.local.md
+.claude/
 
 # OS
 .DS_Store
