@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,74 +6,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="DorisTrack - Track your learning progress">
     <title>{% block title %}DorisTrack{% endblock %}</title>
-    <style>
-        :root {
-            --color-navy: #0D1B2A;
-            --color-gold: #D4A843;
-            --color-bone: #F9F7F4;
-            --font-heading: 'Nunito', sans-serif;
-            --font-body: 'DM Sans', sans-serif;
-        }
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: var(--font-body);
-            background-color: var(--color-bone);
-            color: var(--color-navy);
-            line-height: 1.6;
-        }
-        h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 700; }
-        a { color: var(--color-gold); text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .btn {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s ease;
-        }
-        .btn-primary {
-            background-color: var(--color-gold);
-            color: var(--color-navy);
-        }
-        .btn-primary:hover { opacity: 0.9; text-decoration: none; }
-        .btn-secondary {
-            background-color: var(--color-navy);
-            color: var(--color-bone);
-        }
-        .btn-secondary:hover { opacity: 0.9; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
-        {% block extra_css %}{% endblock %}
-    </style>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header class="site-header">
-        <nav class="navbar">
-            <div class="container">
-                <a href="/" class="brand">
-                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="32" height="32" rx="8" fill="#0D1B2A"/>
-                        <path d="M8 22L16 10L24 22H8Z" fill="#D4A843"/>
+    <header class="site-header" id="siteHeader">
+        <nav class="navbar container">
+            <a href="{% url 'dashboard:home' %}" class="brand">
+                <span class="brand__mark">
+                    <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 22L16 10L24 22H8Z" fill="#0D1B2A"/>
                     </svg>
-                    DorisTrack
-                </a>
+                </span>
+                DorisTrack
+            </a>
+
+            <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.getElementById('siteHeader').classList.toggle('nav-open')">☰</button>
+
+            <div class="nav">
+                <a href="{% url 'dashboard:home' %}" class="nav-item {% if request.path == '/' %}active{% endif %}">Dashboard</a>
+                <a href="{% url 'scores:score_list' %}" class="nav-item {% if '/scores' in request.path %}active{% endif %}">Scores</a>
+                <a href="{% url 'vocabulary:review_session' %}" class="nav-item {% if '/vocabulary' in request.path %}active{% endif %}">Vocabulary</a>
+                <a href="{% url 'grammar:correction_list' %}" class="nav-item {% if '/grammar' in request.path %}active{% endif %}">Grammar</a>
+                <a href="{% url 'practice:list' %}" class="nav-item {% if '/practice' in request.path %}active{% endif %}">Practice</a>
+                <a href="{% url 'quiz:quiz_list' %}" class="nav-item {% if '/quiz' in request.path %}active{% endif %}">Quiz</a>
+                <a href="{% url 'profiles:student_profile' %}" class="nav-item {% if '/profile' in request.path %}active{% endif %}">Profile</a>
             </div>
         </nav>
     </header>
 
     <main class="main-content">
         <div class="container">
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert--{{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             {% block content %}{% endblock %}
         </div>
     </main>
 
     <footer class="site-footer">
         <div class="container">
-            <p>&copy; 2026 DorisTrack. Built with D2Clic structure.</p>
+            <p>&copy; 2026 DorisTrack</p>
+            <p>Built with the D2Clic structure</p>
         </div>
     </footer>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
