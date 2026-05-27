@@ -1,6 +1,8 @@
 """Selectors for core app - aggregator functions for dashboard."""
 from datetime import date, timedelta
 
+from django.db import models
+
 from apps.profiles.models import Student
 from apps.scores.models import Assessment, Score
 from apps.vocabulary.models import Word
@@ -70,8 +72,10 @@ def get_score_summary(student, limit=5):
         if score:
             latest_per_skill[skill] = score.value
 
-    # Determine declining skills (latest score below average)
+    # Determine declining skills (latest below average) and per-skill trend
+    # direction (latest score vs the previous one).
     declining_skills = []
+    skill_trends = {}
     for skill, latest_value in latest_per_skill.items():
         skill_scores = list(
             Score.objects
@@ -80,9 +84,17 @@ def get_score_summary(student, limit=5):
             .values_list("value", flat=True)
         )
         if len(skill_scores) >= 2:
+            if skill_scores[-1] > skill_scores[-2]:
+                skill_trends[skill] = "up"
+            elif skill_scores[-1] < skill_scores[-2]:
+                skill_trends[skill] = "down"
+            else:
+                skill_trends[skill] = "stable"
             avg = sum(skill_scores) / len(skill_scores)
             if latest_value < avg:
                 declining_skills.append(skill)
+        else:
+            skill_trends[skill] = "stable"
 
     return {
         "latest_assessments": [
@@ -96,6 +108,7 @@ def get_score_summary(student, limit=5):
         ],
         "latest_per_skill": latest_per_skill,
         "declining_skills": declining_skills,
+        "skill_trends": skill_trends,
     }
 
 
@@ -210,16 +223,25 @@ def get_recent_corrections(student, limit=10):
 
 
 def get_quiz_scores(student, limit=3):
-    """Return last `limit` quiz scores."""
+    """Return last `limit` quizzes with their score as a percentage."""
     from apps.quiz.models import Quiz
-    quizzes = Quiz.objects.filter(student=student).order_by("-week_start_date")[:limit]
-    return [
-        {
+    quizzes = (
+        Quiz.objects
+        .filter(student=student)
+        .prefetch_related("questions")
+        .order_by("-week_start_date")[:limit]
+    )
+    result = []
+    for q in quizzes:
+        questions = q.questions.all()
+        total = len(questions)
+        correct = sum(1 for question in questions if question.is_correct)
+        score_percent = round(correct / total * 100) if total else None
+        result.append({
             "week_start_date": q.week_start_date.isoformat(),
-            "score": q.get_score() if hasattr(q, "get_score") else None,
-        }
-        for q in quizzes
-    ]
+            "score_percent": score_percent,
+        })
+    return result
 
 
 def get_next_quiz_date(student):

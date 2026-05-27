@@ -2,6 +2,7 @@
 import json
 from datetime import date, timedelta
 
+from django.db.models import Avg
 from django.shortcuts import render, redirect
 from django.contrib import messages
 
@@ -25,7 +26,6 @@ def _get_trends(student_id: int) -> dict:
     Compute trend direction per skill: 'up', 'down', or 'stable'.
     Compares last 7 days avg vs previous 7 days avg.
     """
-    from django.db.models import Avg
     today = date.today()
     recent_start = today - timedelta(days=6)
     previous_start = today - timedelta(days=13)

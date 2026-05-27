@@ -7,6 +7,7 @@ from django.test import TestCase
 from apps.vocabulary.selectors import (
     get_word_failure_rate,
     get_difficult_words_detailed,
+    get_difficult_words,
 )
 from apps.vocabulary.models import Word
 from apps.profiles.models import Student
