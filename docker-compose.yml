@@ -7,7 +7,8 @@ services:
       context: .
       dockerfile: Python/Dockerfile
     ports:
-      - "8000:8000"
+      # host 8888 -> container 8000 (gunicorn binds 0.0.0.0:8000 inside)
+      - "8888:8000"
     environment:
       - DEBUG=False
       - DJANGO_SECRET_KEY=change-me-in-production
