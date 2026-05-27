@@ -3,41 +3,33 @@
 {% block title %}Student Profile — DorisTrack{% endblock %}
 
 {% block content %}
-<div class="card">
+<div class="page-head">
+  <div class="page-head__titles">
     <h1>{{ student.name }}</h1>
-    <div style="margin-top: 0.5rem;">
-        <span class="badge">{{ student.current_level }}</span>
-        <span style="color: var(--navy); margin: 0 0.5rem;">→</span>
-        <span class="badge" style="background: var(--navy); color: var(--gold);">{{ student.target_level }}</span>
-    </div>
+    <p class="page-subtitle">{% if student.tutor %}Tutor: {{ student.tutor.name }}{% else %}Student profile{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    <span class="pill pill--current">{{ student.current_level }}</span>
+    <span class="pill pill--target">Target {{ student.target_level }}</span>
+  </div>
+</div>
 
-    <div class="progress-bar" style="margin-top: 1.5rem;">
-        <div class="progress-fill" style="width: 50%;">50% to goal</div>
-    </div>
-
-    <div class="info-grid">
-        <div class="info-item">
-            <label>Start Date</label>
-            <p>{{ student.start_date|date:"F j, Y" }}</p>
-        </div>
-        <div class="info-item">
-            <label>Current Level</label>
-            <p>{{ student.current_level }}</p>
-        </div>
-        <div class="info-item">
-            <label>Target Level</label>
-            <p>{{ student.target_level }}</p>
-        </div>
-        <div class="info-item">
-            <label>Priority Areas</label>
-            <div class="tags">
-                {% for area in student.priority_areas %}
-                <span class="badge">{{ area }}</span>
-                {% empty %}
-                <span style="color:#888;">No priority areas set</span>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
+<div class="grid grid-auto">
+  <div class="card">
+    <div class="stat__label">Start date</div>
+    <p class="mt-1" style="color:var(--ink);font-weight:600;">{{ student.start_date|date:"F j, Y"|default:"—" }}</p>
+  </div>
+  <div class="card">
+    <div class="stat__label">Current level</div>
+    <p class="mt-1" style="color:var(--ink);font-weight:600;">{{ student.get_current_level_display }}</p>
+  </div>
+  <div class="card">
+    <div class="stat__label">Target level</div>
+    <p class="mt-1" style="color:var(--ink);font-weight:600;">{{ student.get_target_level_display }}</p>
+  </div>
+  <div class="card">
+    <div class="stat__label">Priority areas</div>
+    <p class="mt-1" style="color:var(--ink);">{{ student.priority_areas|default:"No priority areas set" }}</p>
+  </div>
 </div>
 {% endblock %}

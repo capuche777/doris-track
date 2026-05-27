@@ -1,47 +1,47 @@
 {% extends "base.html" %}
 
-{% block title %}Add Grammar Correction - DorisTrack{% endblock %}
+{% block title %}Add Grammar Correction — DorisTrack{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 640px; margin: 2rem auto; padding: 0 1rem;">
+<div class="page-head">
+  <div class="page-head__titles">
     <h1>Log Grammar Correction</h1>
+    <p class="page-subtitle">Record a mistake and its correct form</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'grammar:correction_list' %}" class="btn btn-ghost">Back to log</a>
+  </div>
+</div>
 
-    <form method="post" style="background: #fff; padding: 2rem; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
-        {% csrf_token %}
-
-        <div style="margin-bottom: 1.25rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Student Mistake *</label>
-            <input type="text" name="student_mistake" required placeholder="e.g. I go yesterday"
-                style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
-        </div>
-
-        <div style="margin-bottom: 1.25rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Correct Version *</label>
-            <input type="text" name="correct_version" required placeholder="e.g. I went yesterday"
-                style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
-        </div>
-
-        <div style="margin-bottom: 1.25rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Category</label>
-            <select name="category" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem;">
-                <option value="prepositions">Prepositions</option>
-                <option value="verb_tenses">Verb Tenses</option>
-                <option value="word_order">Word Order</option>
-                <option value="articles">Articles</option>
-                <option value="other" selected>Other</option>
-            </select>
-        </div>
-
-        <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Grammar Rule</label>
-            <input type="text" name="grammar_rule" placeholder="e.g. Past simple of regular verbs"
-                style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
-        </div>
-
-        <div style="display: flex; gap: 1rem;">
-            <button type="submit" style="flex: 1; padding: 0.75rem; background: #1e3a5f; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600;">Log Correction</button>
-            <a href="{% url 'grammar:correction_list' %}" style="padding: 0.75rem 1.5rem; border: 1px solid #d1d5db; border-radius: 8px; text-decoration: none; color: #6b7280; font-weight: 600;">Cancel</a>
-        </div>
-    </form>
+<div class="card">
+  <form method="post" class="form">
+    {% csrf_token %}
+    <div class="field">
+      <label>Student mistake *</label>
+      <input type="text" name="student_mistake" required placeholder="e.g. I go yesterday">
+    </div>
+    <div class="field">
+      <label>Correct version *</label>
+      <input type="text" name="correct_version" required placeholder="e.g. I went yesterday">
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <select name="category">
+        <option value="prepositions">Prepositions</option>
+        <option value="verb_tenses">Verb Tenses</option>
+        <option value="word_order">Word Order</option>
+        <option value="articles">Articles</option>
+        <option value="other" selected>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Grammar rule</label>
+      <input type="text" name="grammar_rule" placeholder="e.g. Past simple of regular verbs">
+    </div>
+    <div class="cluster">
+      <button type="submit" class="btn btn-primary">Log Correction</button>
+      <a href="{% url 'grammar:correction_list' %}" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
 </div>
 {% endblock %}

@@ -1,78 +1,85 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Take Quiz</title>
-    <style>
-        body { font-family: sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; }
-        h1 { color: #333; }
-        .question { background: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #4CAF50; }
-        .question p { font-size: 1.1em; }
-        .question-type { font-size: 0.85em; color: #888; text-transform: uppercase; margin-bottom: 5px; }
-        input[type="text"] { width: 100%; padding: 12px; font-size: 1em; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { background: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 6px; font-size: 1em; cursor: pointer; }
-        button:hover { background: #45a049; }
-        .progress { color: #888; font-size: 0.9em; margin-bottom: 20px; }
-        .feedback { padding: 10px; margin: 10px 0; border-radius: 6px; }
-        .feedback.correct { background: #d4edda; color: #155724; }
-        .feedback.incorrect { background: #f8d7da; color: #721c24; }
-        .next-btn { background: #2196F3; margin-left: 10px; }
-    </style>
-</head>
-<body>
-    <h1>📝 Weekly Quiz</h1>
-    <p class="progress">Week of {{ quiz.week_start_date }} — Question {{ forloop.counter }} of {{ questions.count }}</p>
+{% extends "base.html" %}
 
-    <div id="questions-container">
-        {% for question in questions %}
-        <div class="question" id="question-{{ question.id }}" data-question-id="{{ question.id }}">
-            <div class="question-type">{{ question.get_question_type_display }}</div>
-            <p><strong>{{ question.prompt }}</strong></p>
-            <form method="POST" action="{% url 'quiz:quiz_submit' question.id %}" class="quiz-form">
-                {% csrf_token %}
-                <input type="text" name="answer" placeholder="Your answer..." required>
-                <button type="submit">Submit</button>
-            </form>
-            <div class="feedback" id="feedback-{{ question.id }}" style="display:none;"></div>
-            <a href="{% url 'quiz:quiz_results' quiz.id %}" class="next-btn" id="results-link-{{ question.id }}" style="display:none;">View Results →</a>
-        </div>
-        {% endfor %}
-    </div>
+{% block title %}Take Quiz — DorisTrack{% endblock %}
 
-    <p><a href="{% url 'quiz:quiz_list' %}">← Back to quiz list</a></p>
+{% block extra_css %}
+<style>
+  .question {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--gold);
+    border-radius: var(--r);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .question-type { font-size: 0.78rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
+  .question .prompt { font-size: 1.1rem; font-weight: 600; color: var(--navy); margin-bottom: 1rem; }
+  .quiz-form { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+  .quiz-form input[type="text"] { flex: 1; min-width: 200px; }
+  .feedback { padding: 0.85rem 1.1rem; border-radius: var(--r-sm); margin-top: 1rem; font-weight: 600; }
+  .feedback.correct { background: var(--success-soft); color: #145c3a; border: 1px solid rgba(31,157,98,0.3); }
+  .feedback.incorrect { background: var(--danger-soft); color: #8c2b2b; border: 1px solid rgba(214,69,69,0.3); }
+</style>
+{% endblock %}
 
-    <script>
-    document.querySelectorAll('.quiz-form').forEach(function(form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const questionDiv = form.closest('.question');
-            const questionId = questionDiv.dataset.questionId;
-            const feedbackDiv = document.getElementById('feedback-' + questionId);
-            const resultsLink = document.getElementById('results-link-' + questionId);
-            const formData = new FormData(form);
+{% block content %}
+<div class="page-head">
+  <div class="page-head__titles">
+    <h1>Weekly Quiz</h1>
+    <p class="page-subtitle">Week of {{ quiz.week_start_date }} · {{ questions.count }} question{{ questions.count|pluralize }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'quiz:quiz_list' %}" class="btn btn-ghost">Back to list</a>
+  </div>
+</div>
 
-            fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                }
-            })
-            .then(response => response.text())
-            .then(data => {
-                feedbackDiv.innerHTML = data;
-                feedbackDiv.style.display = 'block';
-                feedbackDiv.className = 'feedback ' + (data.includes('✓') ? 'correct' : 'incorrect');
-                form.style.display = 'none';
-                resultsLink.style.display = 'inline-block';
-            })
-            .catch(err => {
-                feedbackDiv.innerHTML = 'Error submitting answer.';
-                feedbackDiv.style.display = 'block';
-            });
+<div id="questions-container">
+  {% for question in questions %}
+  <div class="question" id="question-{{ question.id }}" data-question-id="{{ question.id }}">
+    <div class="question-type">{{ question.get_question_type_display }}</div>
+    <p class="prompt">{{ question.prompt }}</p>
+    <form method="POST" action="{% url 'quiz:quiz_submit' question.id %}" class="quiz-form">
+      {% csrf_token %}
+      <input type="text" name="answer" placeholder="Your answer…" required>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    <div class="feedback" id="feedback-{{ question.id }}" style="display:none;"></div>
+    <a href="{% url 'quiz:quiz_results' quiz.id %}" class="btn btn-secondary btn-sm mt-2" id="results-link-{{ question.id }}" style="display:none;">View Results →</a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.quiz-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const questionDiv = form.closest('.question');
+        const questionId = questionDiv.dataset.questionId;
+        const feedbackDiv = document.getElementById('feedback-' + questionId);
+        const resultsLink = document.getElementById('results-link-' + questionId);
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(data => {
+            feedbackDiv.innerHTML = data;
+            feedbackDiv.style.display = 'block';
+            feedbackDiv.className = 'feedback ' + (data.includes('✓') ? 'correct' : 'incorrect');
+            form.style.display = 'none';
+            resultsLink.style.display = 'inline-flex';
+        })
+        .catch(err => {
+            feedbackDiv.innerHTML = 'Error submitting answer.';
+            feedbackDiv.style.display = 'block';
         });
     });
-    </script>
-</body>
-</html>
+});
+</script>
+{% endblock %}

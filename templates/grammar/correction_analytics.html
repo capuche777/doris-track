@@ -1,95 +1,75 @@
 {% extends "base.html" %}
 
-{% block title %}Grammar Analytics - DorisTrack{% endblock %}
+{% block title %}Grammar Analytics — DorisTrack{% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+<div class="page-head">
+  <div class="page-head__titles">
     <h1>Grammar Analytics</h1>
-
-    <!-- Period selector -->
-    <form method="get" style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center;">
-        <label>Period:
-            <select name="period" onchange="this.form.submit()" style="padding: 0.5rem; border-radius: 6px; border: 1px solid #d1d5db;">
-                <option value="7" {% if period == 7 %}selected{% endif %}>Last 7 days</option>
-                <option value="30" {% if period == 30 %}selected{% endif %}>Last 30 days</option>
-                <option value="90" {% if period == 90 %}selected{% endif %}>Last 90 days</option>
-            </select>
-        </label>
-        <a href="{% url 'grammar:correction_list' %}" style="color: #6b7280; text-decoration: none;">← Back to log</a>
+    <p class="page-subtitle">Where mistakes cluster, and how they trend</p>
+  </div>
+  <div class="page-actions">
+    <form method="get">
+      <select name="period" onchange="this.form.submit()" style="width:auto;">
+        <option value="7" {% if period == 7 %}selected{% endif %}>Last 7 days</option>
+        <option value="30" {% if period == 30 %}selected{% endif %}>Last 30 days</option>
+        <option value="90" {% if period == 90 %}selected{% endif %}>Last 90 days</option>
+      </select>
     </form>
-
-    {% if mistake_data %}
-    <!-- Bar chart -->
-    <div style="background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin-bottom: 2rem;">
-        <h2 style="margin-bottom: 1rem;">Mistakes by Category</h2>
-        <canvas id="categoryChart" height="120"></canvas>
-    </div>
-
-    <!-- Category detail table -->
-    <div style="background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin-bottom: 2rem;">
-        <h2 style="margin-bottom: 1rem;">Category Breakdown</h2>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead style="background: #f3f4f6;">
-                <tr>
-                    <th style="padding: 0.75rem 1rem; text-align: left;">Category</th>
-                    <th style="padding: 0.75rem 1rem; text-align: right;">Count</th>
-                    <th style="padding: 0.75rem 1rem; text-align: right;">Percentage</th>
-                    <th style="padding: 0.75rem 1rem; text-align: left;">Example</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in mistake_data %}
-                <tr style="border-bottom: 1px solid #f3f4f6;">
-                    <td style="padding: 0.75rem 1rem; font-weight: 600;">{{ item.label }}</td>
-                    <td style="padding: 0.75rem 1rem; text-align: right;">{{ item.count }}</td>
-                    <td style="padding: 0.75rem 1rem; text-align: right;">
-                        <span style="background: #e0e7ff; color: #3730a3; padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.85rem;">{{ item.percentage }}%</span>
-                    </td>
-                    <td style="padding: 0.75rem 1rem; font-size: 0.85rem; color: #dc2626; font-style: italic;">{{ item.example }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <p style="text-align: center; padding: 3rem; color: #6b7280;">No data available for this period.</p>
-    {% endif %}
-
-    {% if trend_data %}
-    <!-- Trend chart -->
-    <div style="background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
-        <h2 style="margin-bottom: 1rem;">Weekly Trend</h2>
-        <canvas id="trendChart" height="100"></canvas>
-    </div>
-    {% endif %}
+    <a href="{% url 'grammar:correction_list' %}" class="btn btn-ghost">Back to log</a>
+  </div>
 </div>
+
+{% if mistake_data %}
+<div class="card mb-2">
+  <h2>Mistakes by Category</h2>
+  <canvas id="categoryChart" height="120"></canvas>
+</div>
+
+<div class="card mb-2">
+  <h2>Category Breakdown</h2>
+  <div class="table-wrap" style="border:none;box-shadow:none;padding:0;">
+    <table class="table">
+      <thead>
+        <tr><th>Category</th><th>Count</th><th>Percentage</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        {% for item in mistake_data %}
+        <tr>
+          <td>{{ item.label }}</td>
+          <td>{{ item.count }}</td>
+          <td><span class="badge badge--gold">{{ item.percentage }}%</span></td>
+          <td style="text-align:left;color:var(--danger);font-style:italic;font-size:0.9rem;">{{ item.example }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty"><span class="empty__icon">📈</span><p>No data available for this period.</p></div></div>
+{% endif %}
+
+{% if trend_data %}
+<div class="card">
+  <h2>Weekly Trend</h2>
+  <canvas id="trendChart" height="100"></canvas>
+</div>
+{% endif %}
 
 {% if mistake_data %}
 <script>
 const categoryLabels = [{% for m in mistake_data %}"{{ m.label }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
 const countValues = [{% for m in mistake_data %}{{ m.count }}{% if not forloop.last %}, {% endif %}{% endfor %}];
-
-const ctx = document.getElementById('categoryChart').getContext('2d');
-new Chart(ctx, {
+new Chart(document.getElementById('categoryChart').getContext('2d'), {
     type: 'bar',
-    data: {
-        labels: categoryLabels,
-        datasets: [{
-            label: 'Mistakes',
-            data: countValues,
-            backgroundColor: ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6'],
-            borderRadius: 8,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
-    }
+    data: { labels: categoryLabels, datasets: [{ label: 'Mistakes', data: countValues,
+        backgroundColor: ['#D4A843','#294563','#EF4444','#1F9D62','#8b5cf6'], borderRadius: 8 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
 });
 </script>
 {% endif %}
@@ -98,28 +78,12 @@ new Chart(ctx, {
 <script>
 const trendLabels = [{% for t in trend_data %}"{{ t.week_start }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
 const trendValues = [{% for t in trend_data %}{{ t.count }}{% if not forloop.last %}, {% endif %}{% endfor %}];
-
-const tctx = document.getElementById('trendChart').getContext('2d');
-new Chart(tctx, {
+new Chart(document.getElementById('trendChart').getContext('2d'), {
     type: 'line',
-    data: {
-        labels: trendLabels,
-        datasets: [{
-            label: 'Corrections',
-            data: trendValues,
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59,130,246,0.1)',
-            fill: true,
-            tension: 0.4,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
-    }
+    data: { labels: trendLabels, datasets: [{ label: 'Corrections', data: trendValues,
+        borderColor: '#D4A843', backgroundColor: 'rgba(212,168,67,0.12)', fill: true, tension: 0.4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
 });
 </script>
 {% endif %}
-
 {% endblock %}

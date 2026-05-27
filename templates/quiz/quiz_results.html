@@ -1,52 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Results</title>
-    <style>
-        body { font-family: sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; }
-        h1 { color: #333; }
-        .score-box { text-align: center; padding: 30px; background: #f9f9f9; border-radius: 12px; margin: 20px 0; }
-        .score-big { font-size: 4em; font-weight: bold; }
-        .score-big.high { color: #4CAF50; }
-        .score-big.medium { color: #ff9800; }
-        .score-big.low { color: #f44336; }
-        .question-result { padding: 15px; margin: 10px 0; border-radius: 8px; }
-        .question-result.correct { background: #e8f5e9; border-left: 4px solid #4CAF50; }
-        .question-result.wrong { background: #ffebee; border-left: 4px solid #f44336; }
-        .question-result .prompt { font-weight: bold; margin-bottom: 5px; }
-        .answer { color: #555; font-size: 0.95em; }
-    </style>
-</head>
-<body>
-    <h1>📊 Quiz Results</h1>
-    <p>Week of {{ quiz.week_start_date }}</p>
+{% extends "base.html" %}
 
-    <div class="score-box">
-        <div class="score-big {% if summary.score_percentage >= 80 %}high{% elif summary.score_percentage >= 50 %}medium{% else %}low{% endif %}">
-            {{ summary.score_percentage }}%
-        </div>
-        <p>{{ summary.correct_answers }} / {{ summary.total_questions }} correct</p>
+{% block title %}Quiz Results — DorisTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+  .score-box { text-align: center; padding: 2.5rem 1.5rem; }
+  .score-big { font-family: var(--font-heading); font-size: 4rem; font-weight: 800; line-height: 1; }
+  .score-big.high   { color: var(--success); }
+  .score-big.medium { color: var(--warning); }
+  .score-big.low    { color: var(--danger); }
+  .q-result { padding: 1rem 1.25rem; margin-bottom: 0.85rem; border-radius: var(--r-sm); border-left: 4px solid; }
+  .q-result.correct { background: var(--success-soft); border-color: var(--success); }
+  .q-result.wrong   { background: var(--danger-soft);  border-color: var(--danger); }
+  .q-result .prompt { font-weight: 700; margin-bottom: 0.25rem; }
+  .q-result .answer { color: var(--ink-soft); font-size: 0.95rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head__titles">
+    <h1>Quiz Results</h1>
+    <p class="page-subtitle">Week of {{ quiz.week_start_date }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'quiz:quiz_list' %}" class="btn btn-ghost">Back to list</a>
+  </div>
+</div>
+
+<div class="card card--accent mb-2">
+  <div class="score-box">
+    <div class="score-big {% if summary.score_percentage >= 80 %}high{% elif summary.score_percentage >= 50 %}medium{% else %}low{% endif %}">
+      {{ summary.score_percentage }}%
     </div>
+    <p class="mt-1">{{ summary.correct_answers }} / {{ summary.total_questions }} correct</p>
+  </div>
+</div>
 
-    <h2>Question Breakdown</h2>
-    {% for q in results.questions %}
-    <div class="question-result {% if q.is_correct %}correct{% else %}wrong{% endif %}">
-        <div class="question-type">{{ q.type }}</div>
-        <div class="prompt">{{ q.prompt }}</div>
-        <div class="answer">
-            {% if q.is_correct %}
-                ✓ Your answer: {{ q.student_answer }}
-            {% else %}
-                ✗ Your answer: {{ q.student_answer|default:"(no answer)" }}<br>
-                ✓ Correct answer: {{ q.correct_answer }}
-            {% endif %}
-        </div>
-    </div>
-    {% endfor %}
-
-    <p><a href="{% url 'quiz:quiz_list' %}">← Back to quiz list</a></p>
-    <p><a href="{% url 'dashboard:home' %}">← Dashboard</a></p>
-</body>
-</html>
+<h2 class="section-title">Question Breakdown</h2>
+{% for q in results.questions %}
+<div class="q-result {% if q.is_correct %}correct{% else %}wrong{% endif %}">
+  <div class="question-type muted" style="font-size:0.78rem;text-transform:uppercase;">{{ q.type }}</div>
+  <div class="prompt">{{ q.prompt }}</div>
+  <div class="answer">
+    {% if q.is_correct %}
+      ✓ Your answer: {{ q.student_answer }}
+    {% else %}
+      ✗ Your answer: {{ q.student_answer|default:"(no answer)" }}<br>
+      ✓ Correct answer: {{ q.correct_answer }}
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

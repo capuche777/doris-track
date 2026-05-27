@@ -1,363 +1,226 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - DorisTrack{% endblock %}
-{% block extra_css %}
-<style>
-.dashboard-header {
-    padding: 2rem 0 1rem;
-    border-bottom: 1px solid rgba(13, 27, 42, 0.1);
-    margin-bottom: 2rem;
-}
-.dashboard-header h1 {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-}
-.level-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-.level-badge.current { background: #D4A843; color: #0D1B2A; }
-.level-badge.target { background: #0D1B2A; color: #F9F7F4; margin-left: 0.5rem; }
-.student-info { color: #666; font-size: 0.95rem; margin-top: 0.25rem; }
-
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-.card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(13, 27, 42, 0.08);
-}
-.card h2 {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #D4A843;
-}
-.card h2 span.declining { color: #c0392b; }
-
-/* Navigation */
-.nav-links {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin-top: 1rem;
-}
-.nav-link {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    background: #0D1B2A;
-    color: #F9F7F4;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: background 0.2s;
-}
-.nav-link:hover { background: #D4A843; color: #0D1B2A; }
-
-/* Score Summary */
-.score-list { list-style: none; }
-.score-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0; }
-.score-item:last-child { border-bottom: none; }
-.skill-name { font-weight: 500; text-transform: capitalize; }
-.skill-score { font-weight: 700; color: #D4A843; font-size: 1.1rem; }
-.skill-declining { color: #c0392b; }
-.declining-note { font-size: 0.8rem; color: #c0392b; margin-left: 0.5rem; }
-.trend-up { color: #27ae60; margin-left: 0.25rem; }
-.trend-down { color: #c0392b; margin-left: 0.25rem; }
-
-/* Vocabulary Stats */
-.vocab-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.vocab-stat { text-align: center; }
-.vocab-stat .number { font-size: 2rem; font-weight: 800; color: #D4A843; }
-.vocab-stat .label { font-size: 0.85rem; color: #666; }
-.vocab-stat.mastered .number { color: #27ae60; }
-.vocab-stat.due .number { color: #c0392b; }
-
-/* Practice Streak */
-.streak-display { text-align: center; padding: 1rem; }
-.streak-number { font-size: 3rem; font-weight: 800; color: #D4A843; }
-.streak-label { font-size: 1rem; color: #666; margin-top: 0.25rem; }
-.streak-detail { font-size: 0.85rem; color: #888; margin-top: 0.5rem; }
-
-/* Quick Actions */
-.quick-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.qa-btn {
-    display: inline-block;
-    padding: 0.6rem 1rem;
-    background: #D4A843;
-    color: #0D1B2A;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: background 0.2s;
-}
-.qa-btn:hover { background: #b8922f; }
-
-/* Difficult Words */
-.word-list { list-style: none; }
-.word-item { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #f0f0f0; }
-.word-item:last-child { border-bottom: none; }
-.word-name { font-weight: 500; }
-.word-wrong { font-size: 0.8rem; color: #c0392b; }
-
-/* Grammar Alerts */
-.alert-list { list-style: none; }
-.alert-item { padding: 0.4rem 0; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
-.alert-item:last-child { border-bottom: none; }
-.alert-category { text-transform: capitalize; font-weight: 500; }
-.alert-count { background: #c0392b; color: white; border-radius: 10px; padding: 0.1rem 0.5rem; font-size: 0.8rem; }
-
-/* Quiz Scores */
-.quiz-list { list-style: none; }
-.quiz-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0; }
-.quiz-item:last-child { border-bottom: none; }
-
-/* Recent Corrections */
-.correction-list { list-style: none; }
-.correction-item { padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0; }
-.correction-item:last-child { border-bottom: none; }
-.correction-date { font-size: 0.8rem; color: #888; }
-.correction-mistake { color: #c0392b; font-style: italic; }
-.correction-correct { color: #27ae60; }
-
-/* Next Quiz */
-.next-quiz {
-    text-align: center;
-    padding: 1rem;
-    background: linear-gradient(135deg, #0D1B2A, #1a3a5c);
-    border-radius: 10px;
-    color: white;
-}
-.next-quiz-date { font-size: 1.5rem; font-weight: 700; color: #D4A843; }
-.next-quiz-label { font-size: 0.9rem; opacity: 0.8; margin-top: 0.25rem; }
-
-/* Next Quiz Banner */
-.next-quiz-banner {
-    background: linear-gradient(135deg, #0D1B2A, #1a3a5c);
-    color: white;
-    padding: 1rem 1.5rem;
-    border-radius: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-.next-quiz-banner .date { font-size: 1.2rem; font-weight: 700; color: #D4A843; }
-.next-quiz-banner .scheduled-badge { background: #27ae60; padding: 0.2rem 0.6rem; border-radius: 10px; font-size: 0.8rem; }
-
-.no-data { color: #999; font-style: italic; text-align: center; padding: 2rem; }
-</style>
-{% endblock %}
+{% load core_extras %}
+{% block title %}Dashboard — DorisTrack{% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <h1>Welcome{% if student.name %}, {{ student.name }}{% endif %}!</h1>
-    <span class="level-badge current">{{ student.current_level }}</span>
-    <span class="level-badge target">Target: {{ student.target_level }}</span>
-    {% if dashboard.student_info.tutor %}
-    <p class="student-info">Tutor: {{ dashboard.student_info.tutor }}</p>
+<div class="page-head">
+    <div class="page-head__titles">
+        <h1>Welcome back{% if student.name %}, {{ student.name }}{% endif %}</h1>
+        <p class="page-subtitle">Your learning progress at a glance</p>
+    </div>
+    {% if student %}
+    <div class="page-actions">
+        <span class="pill pill--current">{{ student.current_level }}</span>
+        <span class="pill pill--target">Target {{ student.target_level }}</span>
+    </div>
     {% endif %}
-    <nav class="nav-links">
-        <a href="{% url 'scores:score_list' %}" class="nav-link">Scores</a>
-        <a href="{% url 'vocabulary:review_session' %}" class="nav-link">Vocabulary</a>
-        <a href="{% url 'practice:list' %}" class="nav-link">Practice</a>
-        <a href="{% url 'quiz:quiz_list' %}" class="nav-link">Quiz</a>
-        <a href="{% url 'grammar:correction_list' %}" class="nav-link">Grammar</a>
-    </nav>
 </div>
 
+{% if not student %}
+<div class="card">
+    <div class="empty">
+        <span class="empty__icon">👋</span>
+        <p>No student profile yet. Create one in the admin to start tracking progress.</p>
+    </div>
+</div>
+{% else %}
+
 {% if dashboard.next_quiz_date %}
-<div class="next-quiz-banner">
+<div class="callout callout--navy">
     <div>
-        <div style="font-size:0.9rem;opacity:0.8;">Next Quiz</div>
-        <div class="date">{{ dashboard.next_quiz_date.next_quiz_date }}</div>
+        <div class="callout__label">Next quiz</div>
+        <div class="callout__big">{{ dashboard.next_quiz_date.next_quiz_date }}</div>
     </div>
     {% if dashboard.next_quiz_date.scheduled %}
-    <span class="scheduled-badge">✓ Scheduled</span>
+    <span class="badge badge--success">✓ Scheduled</span>
     {% else %}
-    <a href="{% url 'quiz:quiz_take' %}" class="qa-btn">Take Quiz</a>
+    <a href="{% url 'quiz:quiz_take' %}" class="btn btn-primary">Take Quiz</a>
     {% endif %}
 </div>
 {% endif %}
 
-<div class="dashboard-grid">
+<!-- Key metrics -->
+<div class="stat-grid">
+    <div class="stat is-navy">
+        <div class="stat__label">Day streak</div>
+        <div class="stat__num">{{ dashboard.practice_streak.streak }}</div>
+        <div class="stat__sub">🔥 {{ dashboard.practice_streak.sessions_last_30_days }} sessions / 30d</div>
+    </div>
+    <div class="stat">
+        <div class="stat__label">Vocabulary</div>
+        <div class="stat__num">{{ dashboard.vocabulary_stats.total_words }}</div>
+        <div class="stat__sub">{{ dashboard.vocabulary_stats.mastered }} mastered</div>
+    </div>
+    <div class="stat {% if dashboard.vocabulary_stats.words_due_today %}is-danger{% endif %}">
+        <div class="stat__label">Due today</div>
+        <div class="stat__num">{{ dashboard.vocabulary_stats.words_due_today }}</div>
+        <div class="stat__sub">words to review</div>
+    </div>
+    <div class="stat is-success">
+        <div class="stat__label">Minutes this week</div>
+        <div class="stat__num">{{ dashboard.practice_streak.minutes_this_week }}</div>
+        <div class="stat__sub">practice time</div>
+    </div>
+</div>
+
+<div class="grid grid-auto">
     <!-- Score Summary -->
-    <div class="card">
-        <h2>Score Summary</h2>
+    <div class="card card--hover card--accent">
+        <h2>Score Summary {% if dashboard.score_summary.declining_skills %}<span class="declining">⚠ declining</span>{% endif %}</h2>
         {% if dashboard.score_summary.latest_per_skill %}
-        <ul class="score-list">
-        {% for skill, value in dashboard.score_summary.latest_per_skill.items %}
-            <li class="score-item">
-                <span class="skill-name">{{ skill }}</span>
-                <span>
-                    <span class="skill-score {% if skill in dashboard.score_summary.declining_skills %}skill-declining{% endif %}">{{ value }}%</span>
-                    {% if skill in dashboard.score_summary.declining_skills %}
-                    <span class="trend-down">↓</span>
-                    {% else %}
-                    <span class="trend-up">↑</span>
-                    {% endif %}
+        <ul class="list">
+            {% for skill, value in dashboard.score_summary.latest_per_skill.items %}
+            <li class="list-row">
+                <span class="label">{{ skill }}</span>
+                <span class="cluster">
+                    <span class="value">{{ value }}%</span>
+                    {% with trend=dashboard.score_summary.skill_trends|lookup:skill %}
+                        {% if trend == "up" %}<span class="trend-up">↑</span>
+                        {% elif trend == "down" %}<span class="trend-down">↓</span>
+                        {% else %}<span class="trend-stable">→</span>{% endif %}
+                    {% endwith %}
                 </span>
             </li>
-        {% endfor %}
+            {% endfor %}
         </ul>
         {% else %}
-        <p class="no-data">No scores recorded yet.</p>
+        <div class="empty"><span class="empty__icon">📊</span><p>No scores recorded yet.</p></div>
         {% endif %}
     </div>
 
-    <!-- Vocabulary Stats -->
-    <div class="card">
+    <!-- Vocabulary Bank -->
+    <div class="card card--hover">
         <h2>Vocabulary Bank</h2>
-        <div class="vocab-stats">
-            <div class="vocab-stat">
-                <div class="number">{{ dashboard.vocabulary_stats.total_words }}</div>
-                <div class="label">Total Words</div>
+        <div class="grid grid-2" style="gap:1rem;">
+            <div class="text-center">
+                <div class="stat__num" style="font-size:1.8rem;">{{ dashboard.vocabulary_stats.total_words }}</div>
+                <div class="stat__label">Total</div>
             </div>
-            <div class="vocab-stat mastered">
-                <div class="number">{{ dashboard.vocabulary_stats.mastered }}</div>
-                <div class="label">Mastered</div>
+            <div class="text-center">
+                <div class="stat__num" style="font-size:1.8rem;color:var(--success);">{{ dashboard.vocabulary_stats.mastered }}</div>
+                <div class="stat__label">Mastered</div>
             </div>
-            <div class="vocab-stat">
-                <div class="number" style="color:#2980b9">{{ dashboard.vocabulary_stats.learning }}</div>
-                <div class="label">Learning</div>
+            <div class="text-center">
+                <div class="stat__num" style="font-size:1.8rem;color:var(--info);">{{ dashboard.vocabulary_stats.learning }}</div>
+                <div class="stat__label">Learning</div>
             </div>
-            <div class="vocab-stat">
-                <div class="number">{{ dashboard.vocabulary_stats.new }}</div>
-                <div class="label">New</div>
+            <div class="text-center">
+                <div class="stat__num" style="font-size:1.8rem;">{{ dashboard.vocabulary_stats.new }}</div>
+                <div class="stat__label">New</div>
             </div>
         </div>
         {% if dashboard.vocabulary_stats.words_due_today > 0 %}
-        <p style="margin-top:1rem;color:#c0392b;font-weight:600;text-align:center;">
-            {{ dashboard.vocabulary_stats.words_due_today }} word{{ dashboard.vocabulary_stats.words_due_today|pluralize }} due for review today
+        <p class="text-center mt-2" style="color:var(--danger);font-weight:700;">
+            {{ dashboard.vocabulary_stats.words_due_today }} word{{ dashboard.vocabulary_stats.words_due_today|pluralize }} due today
         </p>
         {% endif %}
     </div>
 
-    <!-- Practice Streak -->
-    <div class="card">
-        <h2>Practice Streak</h2>
-        <div class="streak-display">
-            <div class="streak-number">{{ dashboard.practice_streak.streak }}</div>
-            <div class="streak-label">day streak</div>
-            {% if dashboard.practice_streak.last_practice %}
-            <div class="streak-detail">Last practice: {{ dashboard.practice_streak.last_practice }}</div>
-            {% endif %}
-            <div class="streak-detail">{{ dashboard.practice_streak.sessions_last_30_days }} sessions this month</div>
-            {% if dashboard.practice_streak.minutes_this_week > 0 %}
-            <div class="streak-detail">Total minutes this week: {{ dashboard.practice_streak.minutes_this_week }}</div>
-            {% endif %}
-        </div>
-    </div>
-
     <!-- Difficult Words -->
-    <div class="card">
+    <div class="card card--hover">
         <h2>Difficult Words</h2>
         {% if dashboard.difficult_words %}
-        <ul class="word-list">
-        {% for w in dashboard.difficult_words %}
-            <li class="word-item">
-                <span class="word-name">{{ w.word }}</span>
-                <span class="word-wrong">{{ w.times_wrong }}× wrong</span>
+        <ul class="list">
+            {% for w in dashboard.difficult_words %}
+            <li class="list-row">
+                <span class="label">{{ w.word }}</span>
+                <span class="badge badge--danger">{{ w.times_wrong }}× wrong</span>
             </li>
-        {% endfor %}
+            {% endfor %}
         </ul>
         {% else %}
-        <p class="no-data">No difficult words yet.</p>
+        <div class="empty"><span class="empty__icon">✅</span><p>No difficult words yet.</p></div>
         {% endif %}
     </div>
 
     <!-- Grammar Alerts -->
-    <div class="card">
+    <div class="card card--hover">
         <h2>Grammar Alerts</h2>
         {% if dashboard.grammar_alerts %}
-        <ul class="alert-list">
-        {% for alert in dashboard.grammar_alerts %}
-            <li class="alert-item">
-                <span class="alert-category">{{ alert.category|default:"Other"|capfirst }}</span>
-                <span class="alert-count">{{ alert.count }}</span>
+        <ul class="list">
+            {% for alert in dashboard.grammar_alerts %}
+            <li class="list-row">
+                <span class="label">{{ alert.category|default:"Other"|capfirst }}</span>
+                <span class="badge badge--warning">{{ alert.count }}</span>
             </li>
-        {% endfor %}
+            {% endfor %}
         </ul>
         {% else %}
-        <p class="no-data">No grammar mistakes this month.</p>
+        <div class="empty"><span class="empty__icon">✍️</span><p>No grammar mistakes this month.</p></div>
         {% endif %}
     </div>
 
     <!-- Quiz Scores -->
-    <div class="card">
+    <div class="card card--hover">
         <h2>Quiz Scores</h2>
         {% if dashboard.quiz_scores %}
-        <ul class="quiz-list">
-        {% for quiz in dashboard.quiz_scores %}
-            <li class="quiz-item">
-                <span>{{ quiz.week_start_date }}</span>
+        <ul class="list">
+            {% for quiz in dashboard.quiz_scores %}
+            <li class="list-row">
+                <span class="label">{{ quiz.week_start_date }}</span>
                 {% if quiz.score_percent is not None %}
-                <span style="font-weight:700;color:#D4A843;">{{ quiz.score_percent }}%</span>
+                <span class="value">{{ quiz.score_percent }}%</span>
                 {% else %}
-                <span style="color:#888;">—</span>
+                <span class="muted">—</span>
                 {% endif %}
             </li>
-        {% endfor %}
+            {% endfor %}
         </ul>
         {% else %}
-        <p class="no-data">No quizzes yet.</p>
+        <div class="empty"><span class="empty__icon">📝</span><p>No quizzes yet.</p></div>
         {% endif %}
     </div>
 
     <!-- Quick Actions -->
-    <div class="card">
+    <div class="card card--hover">
         <h2>Quick Actions</h2>
-        <div class="quick-actions">
-            <a href="{% url 'scores:score_entry' %}" class="qa-btn">Add Score</a>
-            <a href="{% url 'vocabulary:review_session' %}" class="qa-btn">Review Vocabulary</a>
-            <a href="{% url 'practice:add' %}" class="qa-btn">Log Practice</a>
-            <a href="{% url 'quiz:quiz_take' %}" class="qa-btn">Take Quiz</a>
+        <div class="stack-sm">
+            <a href="{% url 'scores:score_entry' %}" class="btn btn-secondary btn-block">Add Score</a>
+            <a href="{% url 'vocabulary:review_session' %}" class="btn btn-secondary btn-block">Review Vocabulary</a>
+            <a href="{% url 'practice:add' %}" class="btn btn-secondary btn-block">Log Practice</a>
+            <a href="{% url 'quiz:quiz_take' %}" class="btn btn-primary btn-block">Take Quiz</a>
         </div>
     </div>
 </div>
 
 <!-- Recent Assessments -->
 {% if dashboard.score_summary.latest_assessments %}
-<div class="card" style="margin-bottom:2rem;">
-    <h2>Recent Assessments</h2>
-    <ul class="score-list">
-    {% for assessment in dashboard.score_summary.latest_assessments %}
-        <li class="score-item">
-            <span class="skill-name">{{ assessment.date }}</span>
-            <span style="color:#666;font-size:0.9rem;">
-                {% for skill, value in assessment.scores.items %}{{ skill }}: {{ value }}{% if not forloop.last %}, {% endif %}{% endfor %}
-            </span>
-        </li>
-    {% endfor %}
-    </ul>
+<div class="section" style="margin-top:2rem;">
+    <h2 class="section-title">Recent Assessments</h2>
+    <div class="card">
+        <ul class="list">
+            {% for assessment in dashboard.score_summary.latest_assessments %}
+            <li class="list-row">
+                <span class="label">{{ assessment.date }}</span>
+                <span class="muted" style="font-size:0.9rem;">
+                    {% for skill, value in assessment.scores.items %}{{ skill }}: {{ value }}{% if not forloop.last %} · {% endif %}{% endfor %}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
 </div>
 {% endif %}
 
 <!-- Recent Corrections -->
 {% if dashboard.recent_corrections %}
-<div class="card" style="margin-bottom:2rem;">
-    <h2>Recent Corrections</h2>
-    <ul class="correction-list">
-    {% for correction in dashboard.recent_corrections %}
-        <li class="correction-item">
-            <div class="correction-date">{{ correction.date }} — <strong>{{ correction.category|capfirst }}</strong></div>
-            <div style="margin-top:0.25rem;">
-                <span class="correction-mistake">✗ {{ correction.mistake }}</span>
-                <br>
-                <span class="correction-correct">✓ {{ correction.correct }}</span>
-            </div>
-        </li>
-    {% endfor %}
-    </ul>
+<div class="section">
+    <h2 class="section-title">Recent Corrections</h2>
+    <div class="card">
+        <ul class="list">
+            {% for correction in dashboard.recent_corrections %}
+            <li class="list-row" style="align-items:flex-start;">
+                <div>
+                    <div style="color:var(--danger);font-style:italic;">✗ {{ correction.mistake }}</div>
+                    <div style="color:var(--success);">✓ {{ correction.correct }}</div>
+                </div>
+                <span class="badge badge--muted">{{ correction.category|capfirst }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
 </div>
+{% endif %}
+
 {% endif %}
 {% endblock %}

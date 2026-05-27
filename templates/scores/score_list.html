@@ -1,72 +1,49 @@
 {% extends "base.html" %}
+{% load scores_filters %}
 
 {% block title %}Score History — DorisTrack{% endblock %}
 
 {% block extra_css %}
 <style>
-  .decline-banner {
-    background: #FEE2E2;
-    border: 1px solid #EF4444;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    margin-bottom: 1.5rem;
-    color: #991B1B;
-  }
-  .decline-banner strong { color: #DC2626; }
-  .scores-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-  .scores-table th, .scores-table td {
-    padding: 0.5rem 0.75rem;
-    text-align: center;
-    border-bottom: 1px solid #E5E7EB;
-  }
-  .scores-table th { background: var(--color-navy); color: var(--color-bone); font-size: 0.85rem; }
-  .scores-table td { font-size: 0.95rem; }
-  .skill-dot {
-    display: inline-block;
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    vertical-align: middle;
-    margin-right: 3px;
-  }
-  .action-row { display: flex; gap: 0.75rem; margin: 1.5rem 0; }
-  .latest-summary { background: #F9F7F4; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
-  .trend-up { color: #22C55E; font-weight: 700; margin-left: 2px; }
-  .trend-down { color: #EF4444; font-weight: 700; margin-left: 2px; }
-  .trend-stable { color: #6B7280; font-weight: 700; margin-left: 2px; }
-  .latest-scores-row { display: flex; gap: 1.25rem; flex-wrap: wrap; }
-  .latest-skill {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.95rem;
-  }
+  .skill-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 5px; }
+  .latest-scores-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .latest-skill { display: flex; align-items: center; gap: 0.35rem; font-size: 0.95rem; }
 </style>
 {% endblock %}
 
 {% block content %}
-<h1>Score History</h1>
+<div class="page-head">
+  <div class="page-head__titles">
+    <h1>Score History</h1>
+    <p class="page-subtitle">Skill assessments over time{% if student %} for {{ student.name }}{% endif %}</p>
+  </div>
+  {% if student and assessments %}
+  <div class="page-actions">
+    <a href="{% url 'scores:score_entry' %}" class="btn btn-primary">+ New Assessment</a>
+    <a href="{% url 'scores:score_charts' %}" class="btn btn-ghost">View Charts</a>
+  </div>
+  {% endif %}
+</div>
 
 {% if decline_warning %}
-<div class="decline-banner">
-  <strong>Decline Alert:</strong>
-  {% for skill, info in decline_skills.items %}
-    {{ skill|capfirst }} dropped {{ info.change }}pts{% if not forloop.last %}, {% endif %}
-  {% endfor %}
+<div class="alert alert--error">
+  <strong>Decline alert:</strong>
+  {% for skill, info in decline_skills.items %}{{ skill|capfirst }} dropped {{ info.change }}pts{% if not forloop.last %}, {% endif %}{% endfor %}
 </div>
 {% endif %}
 
 {% if latest %}
-<div class="latest-summary">
-  <strong>Latest scores for {{ student.name }}:</strong>
-  <div class="latest-scores-row" style="margin-top:0.5rem;">
+<div class="card mb-2">
+  <strong>Latest scores</strong>
+  <div class="latest-scores-row mt-1">
     {% for skill, value in latest.items %}
     <span class="latest-skill">
       <span class="skill-dot" style="background:{{ skill_colors|get_item:skill }};"></span>
       {{ skill|capfirst }}: <strong>{{ value }}</strong>
       {% with trend=trends|get_item:skill %}
-        {% if trend == "up" %}<span class="trend-up">&#8593;</span>{% endif %}
-        {% if trend == "down" %}<span class="trend-down">&#8595;</span>{% endif %}
-        {% if trend == "stable" %}<span class="trend-stable">&#8594;</span>{% endif %}
+        {% if trend == "up" %}<span class="trend-up">&#8593;</span>
+        {% elif trend == "down" %}<span class="trend-down">&#8595;</span>
+        {% else %}<span class="trend-stable">&#8594;</span>{% endif %}
       {% endwith %}
     </span>
     {% endfor %}
@@ -75,38 +52,35 @@
 {% endif %}
 
 {% if not student %}
-<p>No student found. Please create a student profile first.</p>
+<div class="card"><div class="empty"><span class="empty__icon">👤</span><p>No student found. Please create a student profile first.</p></div></div>
 {% elif not assessments %}
-<p>No assessments recorded yet. <a href="{% url 'scores:score_entry' %}">Add the first one.</a></p>
+<div class="card"><div class="empty"><span class="empty__icon">📊</span><p>No assessments recorded yet.</p><a href="{% url 'scores:score_entry' %}" class="btn btn-primary mt-2">Add the first one</a></div></div>
 {% else %}
-<div class="action-row">
-  <a href="{% url 'scores:score_entry' %}" class="btn btn-primary">+ New Assessment</a>
-  <a href="{% url 'scores:score_charts' %}" class="btn btn-secondary">View Charts</a>
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th><span class="skill-dot" style="background:#3B82F6;"></span>Pronunciation</th>
+        <th><span class="skill-dot" style="background:#22C55E;"></span>Fluency</th>
+        <th><span class="skill-dot" style="background:#F97316;"></span>Intonation</th>
+        <th><span class="skill-dot" style="background:#EF4444;"></span>Grammar</th>
+        <th><span class="skill-dot" style="background:#A855F7;"></span>Vocabulary</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in assessment_data %}
+      <tr>
+        <td>{{ item.date|date:"Y-m-d" }}</td>
+        <td>{{ item.scores.pronunciation|default:"—" }}</td>
+        <td>{{ item.scores.fluency|default:"—" }}</td>
+        <td>{{ item.scores.intonation|default:"—" }}</td>
+        <td>{{ item.scores.grammar|default:"—" }}</td>
+        <td>{{ item.scores.vocabulary|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
-
-<table class="scores-table">
-  <thead>
-    <tr>
-      <th>Date</th>
-      <th><span class="skill-dot" style="background:#3B82F6;"></span>Pronunciation</th>
-      <th><span class="skill-dot" style="background:#22C55E;"></span>Fluency</th>
-      <th><span class="skill-dot" style="background:#F97316;"></span>Intonation</th>
-      <th><span class="skill-dot" style="background:#EF4444;"></span>Grammar</th>
-      <th><span class="skill-dot" style="background:#A855F7;"></span>Vocabulary</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for item in assessment_data %}
-    <tr>
-      <td style="text-align:left; white-space:nowrap;">{{ item.date|date:"Y-m-d" }}</td>
-      <td>{{ item.scores.pronunciation|default:"--" }}</td>
-      <td>{{ item.scores.fluency|default:"--" }}</td>
-      <td>{{ item.scores.intonation|default:"--" }}</td>
-      <td>{{ item.scores.grammar|default:"--" }}</td>
-      <td>{{ item.scores.vocabulary|default:"--" }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
 {% endif %}
 {% endblock %}
