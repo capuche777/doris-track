@@ -29,3 +29,20 @@ class CorrectionSerializer(serializers.ModelSerializer):
             "grammar_rule",
             "category",
         ]
+
+
+class MistakeCategorySerializer(serializers.Serializer):
+    """A grammar mistake category ranked by frequency."""
+
+    category = serializers.CharField()
+    label = serializers.CharField()
+    count = serializers.IntegerField()
+    percentage = serializers.FloatField()
+    example = serializers.CharField()
+
+
+class MistakeTrendPointSerializer(serializers.Serializer):
+    """Weekly mistake count for a category."""
+
+    week_start = serializers.CharField()
+    count = serializers.IntegerField()

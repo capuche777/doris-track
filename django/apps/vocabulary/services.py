@@ -86,3 +86,33 @@ def update_word_after_review(word, correct: bool) -> None:
         word.times_wrong += 1
 
     word.save()
+
+
+def word_exists(student, word: str) -> bool:
+    """Return whether the student already has a word with this spelling."""
+    return Word.objects.filter(student=student, word=word).exists()
+
+
+def create_word(
+    student,
+    word: str,
+    definition: str,
+    difficulty: str = "B2",
+    example_sentence: str = "",
+    collocations: str = "",
+) -> Word:
+    """
+    Create a new vocabulary word for a student. DT-05.
+
+    New words start in the "new" mastery state with `next_review_date`
+    defaulting to today (set by the model), so they surface in the next
+    review session.
+    """
+    return Word.objects.create(
+        student=student,
+        word=word,
+        definition=definition,
+        difficulty=difficulty,
+        example_sentence=example_sentence,
+        collocations=collocations,
+    )

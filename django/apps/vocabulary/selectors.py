@@ -24,15 +24,18 @@ def get_difficult_words(student, threshold: int = 3):
     return Word.objects.filter(student=student, times_wrong__gte=threshold)
 
 
-def get_difficult_words_detailed(student, limit: int = 10):
+def get_difficult_words_detailed(student, limit: int = 10, threshold: int = 1):
     """
     Get top most-missed words for a student (DT-11).
     Returns words sorted by times_wrong descending, excluding mastered.
     Each word annotated with failure_rate percentage.
+
+    `threshold` is the minimum `times_wrong` to qualify (default 1, i.e. any
+    word missed at least once).
     """
     words = Word.objects.filter(
         student=student,
-        times_wrong__gt=0,
+        times_wrong__gte=threshold,
     ).exclude(mastery="mastered").order_by("-times_wrong")[:limit]
 
     result = []

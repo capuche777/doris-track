@@ -1,30 +1,35 @@
 """API views for the vocabulary app."""
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.profiles.selectors import get_student_profile
 from apps.vocabulary.models import Word
-from apps.vocabulary.selectors import get_due_words_count, get_words_for_review
-from apps.vocabulary.services import check_review_answer
-from core.exceptions import StudentNotFound, WordNotFound
+from apps.vocabulary.selectors import (
+    get_difficult_words_detailed,
+    get_due_words_count,
+    get_words_by_mastery,
+    get_words_for_review,
+)
+from apps.vocabulary.services import check_review_answer, create_word, word_exists
+from core.exceptions import StudentNotFound, WordAlreadyExists, WordNotFound
+from core.query_params import parse_positive_int
 
-from .serializers import ReviewAnswerSerializer, ReviewResultSerializer, WordSerializer
+from .serializers import (
+    DifficultWordSerializer,
+    ReviewAnswerSerializer,
+    ReviewResultSerializer,
+    WordCreateSerializer,
+    WordSerializer,
+)
 
 DEFAULT_DUE_LIMIT = 20
-
-
-def _parse_limit(request, default):
-    """Parse a positive ``limit`` query param, falling back to ``default``."""
-    raw = request.query_params.get("limit")
-    if raw is None:
-        return default
-    try:
-        value = int(raw)
-    except (TypeError, ValueError):
-        return default
-    return value if value > 0 else default
+DEFAULT_DIFFICULT_LIMIT = 10
+DEFAULT_DIFFICULT_THRESHOLD = 3
+MASTERY_VALUES = {value for value, _ in Word.MASTERY_CHOICES}
 
 
 class WordsDueView(APIView):
@@ -57,7 +62,7 @@ class WordsDueView(APIView):
         if student is None:
             raise StudentNotFound()
 
-        limit = _parse_limit(request, DEFAULT_DUE_LIMIT)
+        limit = parse_positive_int(request, "limit", DEFAULT_DUE_LIMIT)
         words = get_words_for_review(student)[:limit]
 
         return Response(
@@ -104,3 +109,116 @@ class WordReviewView(APIView):
                 "current_interval_days": word.current_interval_days,
             }
         )
+
+
+class AddWordView(APIView):
+    """Add a new vocabulary word for a student."""
+
+    @extend_schema(
+        summary="Add a vocabulary word",
+        description="Creates a new word for the student. Rejects duplicates.",
+        request=WordCreateSerializer,
+        responses={
+            201: WordSerializer,
+            400: OpenApiResponse(description="Validation error or duplicate word"),
+            404: OpenApiResponse(description="Student not found"),
+        },
+        tags=["Vocabulary"],
+    )
+    def post(self, request, student_id):
+        student = get_student_profile(student_id)
+        if student is None:
+            raise StudentNotFound()
+
+        serializer = WordCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        if word_exists(student, data["word"]):
+            raise WordAlreadyExists()
+
+        word = create_word(
+            student,
+            word=data["word"],
+            definition=data["definition"],
+            difficulty=data["difficulty"],
+            example_sentence=data["example_sentence"],
+            collocations=", ".join(data["collocations"]),
+        )
+        return Response(WordSerializer(word).data, status=status.HTTP_201_CREATED)
+
+
+class DifficultWordsView(APIView):
+    """List the words a student keeps getting wrong."""
+
+    @extend_schema(
+        summary="List difficult words",
+        description="Words with `times_wrong >= threshold`, hardest first.",
+        parameters=[
+            OpenApiParameter(
+                name="limit", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY,
+                required=False,
+                description=f"Max words to return (default {DEFAULT_DIFFICULT_LIMIT}).",
+            ),
+            OpenApiParameter(
+                name="threshold", type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY, required=False,
+                description=(
+                    "Minimum times_wrong to qualify "
+                    f"(default {DEFAULT_DIFFICULT_THRESHOLD})."
+                ),
+            ),
+        ],
+        responses={
+            200: DifficultWordSerializer(many=True),
+            404: OpenApiResponse(description="Student not found"),
+        },
+        tags=["Vocabulary"],
+    )
+    def get(self, request, student_id):
+        student = get_student_profile(student_id)
+        if student is None:
+            raise StudentNotFound()
+
+        limit = parse_positive_int(request, "limit", DEFAULT_DIFFICULT_LIMIT)
+        threshold = parse_positive_int(request, "threshold", DEFAULT_DIFFICULT_THRESHOLD)
+        result = get_difficult_words_detailed(student, limit=limit, threshold=threshold)
+
+        words = [
+            {
+                "id": item["word"].id,
+                "word": item["word"].word,
+                "times_wrong": item["times_wrong"],
+                "review_count": item["review_count"],
+                "failure_rate": item["failure_rate"],
+            }
+            for item in result
+        ]
+        return Response({"words": words})
+
+
+class WordsByMasteryView(APIView):
+    """List a student's words filtered by mastery level."""
+
+    @extend_schema(
+        summary="List words by mastery",
+        description="Words in the given mastery state (new, learning, mastered).",
+        responses={
+            200: WordSerializer(many=True),
+            400: OpenApiResponse(description="Invalid mastery value"),
+            404: OpenApiResponse(description="Student not found"),
+        },
+        tags=["Vocabulary"],
+    )
+    def get(self, request, student_id, mastery):
+        student = get_student_profile(student_id)
+        if student is None:
+            raise StudentNotFound()
+
+        if mastery not in MASTERY_VALUES:
+            raise ValidationError(
+                {"mastery": f"Must be one of: {', '.join(sorted(MASTERY_VALUES))}."}
+            )
+
+        words = get_words_by_mastery(student, mastery)
+        return Response({"words": WordSerializer(words, many=True).data})

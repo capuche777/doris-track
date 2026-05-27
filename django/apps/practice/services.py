@@ -46,25 +46,37 @@ def get_practice_streak(student) -> int:
     return streak
 
 
-def get_practice_stats(student, days: int = 30) -> dict:
+def get_practice_breakdown(student, days: int = 30) -> dict:
     """
-    Get aggregate practice statistics for the student over the last N days. DT-08.
-    Returns: {total_minutes, total_sessions, avg_duration, by_type: {type: minutes}}
+    Get aggregate practice statistics with per-type session and minute counts.
+    Returns: {total_minutes, total_sessions, avg_duration,
+              by_type: {type: {sessions, minutes}}}
     """
     start = date.today() - timedelta(days=days)
     sessions = PracticeSession.objects.filter(student=student, date__gte=start)
-    
+
     total_minutes = sum(s.duration_minutes for s in sessions)
     total_sessions = sessions.count()
     avg_duration = round(total_minutes / total_sessions, 1) if total_sessions > 0 else 0
 
-    by_type = defaultdict(int)
+    by_type = defaultdict(lambda: {"sessions": 0, "minutes": 0})
     for s in sessions:
-        by_type[s.practice_type] += s.duration_minutes
+        by_type[s.practice_type]["sessions"] += 1
+        by_type[s.practice_type]["minutes"] += s.duration_minutes
 
     return {
         "total_minutes": total_minutes,
         "total_sessions": total_sessions,
         "avg_duration": avg_duration,
-        "by_type": dict(by_type),
+        "by_type": {k: dict(v) for k, v in by_type.items()},
     }
+
+
+def get_practice_stats(student, days: int = 30) -> dict:
+    """
+    Get aggregate practice statistics for the student over the last N days. DT-08.
+    Returns: {total_minutes, total_sessions, avg_duration, by_type: {type: minutes}}
+    """
+    data = get_practice_breakdown(student, days)
+    data["by_type"] = {k: v["minutes"] for k, v in data["by_type"].items()}
+    return data

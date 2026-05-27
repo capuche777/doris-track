@@ -11,9 +11,17 @@
 > **Error format:** structured — `{"error": {"code": "UPPERCASE_SNAKE_CASE",
 > "message": "...", "details": {...}}}` (per project convention).
 
-> **Implementation status (2026-05-26):** Phase 1 is **implemented & tested** —
-> `students/by-email/`, `words/due/`, `words/{id}/review/`, `corrections/` POST.
-> Phases 2–3 are still specs.
+> **Implementation status (2026-05-26):** Phases 1 & 2 are **implemented &
+> tested**. This covers the full vocabulary, grammar and practice surfaces —
+> `students/by-email/`; vocabulary `words/` POST, `words/due/`,
+> `words/{id}/review/`, `words/difficult/`, `words/by-mastery/{mastery}/`;
+> grammar `corrections/` GET+POST, `corrections/analytics/`,
+> `corrections/trend/{category}/`; practice `practice/` GET+POST,
+> `practice/streak/`, `practice/stats/`. Phase 3 (scores, quiz, dashboard) is
+> still spec only.
+>
+> Two shapes differ from the examples below, as agreed: `failure_rate` is an
+> integer, and `practice/stats` `by_type` is `{type: {sessions, minutes}}`.
 
 ---
 

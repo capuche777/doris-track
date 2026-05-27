@@ -29,6 +29,32 @@ class WordSerializer(serializers.ModelSerializer):
         return [c.strip() for c in obj.collocations.split(",") if c.strip()]
 
 
+class WordCreateSerializer(serializers.Serializer):
+    """Input payload for adding a new vocabulary word."""
+
+    word = serializers.CharField(max_length=255)
+    definition = serializers.CharField()
+    difficulty = serializers.ChoiceField(
+        choices=Word.DIFFICULTY_CHOICES, default="B2"
+    )
+    example_sentence = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    collocations = serializers.ListField(
+        child=serializers.CharField(), required=False, default=list
+    )
+
+
+class DifficultWordSerializer(serializers.Serializer):
+    """A word the student keeps getting wrong, with its failure rate."""
+
+    id = serializers.IntegerField()
+    word = serializers.CharField()
+    times_wrong = serializers.IntegerField()
+    review_count = serializers.IntegerField()
+    failure_rate = serializers.IntegerField()
+
+
 class ReviewAnswerSerializer(serializers.Serializer):
     """Input payload for submitting a vocabulary review answer."""
 
