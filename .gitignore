@@ -38,6 +38,8 @@ env/
 db.sqlite3
 db.sqlite3-journal
 db.sqlite3.bak-*
+# Data backups (dumpdata fixtures) — contain user data, password hashes, tokens.
+/backups/
 # Generated/runtime artifacts now live under django/. The django/static source
 # dir and app-level static (e.g. apps/core/static) stay tracked.
 /django/staticfiles/

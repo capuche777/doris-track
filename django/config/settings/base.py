@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "drf_spectacular",
+    "drf_spectacular_sidecar",  # self-hosted Swagger UI / ReDoc assets (no CDN)
     # Local apps
     "apps.profiles",
     "apps.vocabulary",
@@ -124,6 +125,11 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SWAGGER_UI_SETTINGS": {"deepLinking": True},
+    # Serve UI assets locally so /api/docs/ and /api/redoc/ work without
+    # internet access to a CDN (required for the offline Doris bot environment).
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
     # current_level and target_level share the same choice set.
     "ENUM_NAME_OVERRIDES": {
         "LevelEnum": "apps.profiles.models.Student.LEVEL_CHOICES",
