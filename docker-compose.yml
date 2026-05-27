@@ -17,8 +17,8 @@ services:
       # forces DEBUG=True, overriding the DEBUG/SECRET_KEY/ALLOWED_HOSTS above.
       - DJANGO_SETTINGS_MODULE=config.settings.dev
     volumes:
-      # Mount the whole repo at /app so code lives at /app/django (matches the
-      # image's WORKDIR /app/django and the three-parent BASE_DIR). templates/,
-      # static/ and db.sqlite3 now live under django/, i.e. /app/django/.
-      - .:/app
+      # Only the Django project lives in the container, mounted at /app (matches
+      # the image layout and BASE_DIR=/app). templates/, static/, db.sqlite3 and
+      # pytest.ini all live under django/.
+      - ./django:/app
     restart: unless-stopped

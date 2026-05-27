@@ -16,9 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY django/requirements.txt django/requirements-dev.txt ./
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
-COPY . .
-
-WORKDIR /app/django
+# Only the Django project (the django/ subdir) lives in the image, at /app.
+# BASE_DIR resolves to /app (config/settings -> config -> /app).
+COPY django/ ./
 
 EXPOSE 8000
 
