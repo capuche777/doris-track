@@ -17,7 +17,10 @@ urlpatterns = [
 
 if settings.DEBUG:
     from debug_toolbar.toolbar import debug_toolbar_urls
+    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # Serve static via finders (STATICFILES_DIRS) so it works under gunicorn
+    # without a collectstatic step during development.
+    urlpatterns += staticfiles_urlpatterns()
     urlpatterns += debug_toolbar_urls()

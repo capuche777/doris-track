@@ -33,9 +33,10 @@ env/
 *.swp
 *.swo
 
-# Static/media files (bind mounts for local dev)
-static/
-media/
+# Static/media files (repo-root bind mounts for local dev).
+# Anchored to root so app-level static dirs (e.g. apps/core/static) are tracked.
+/static/
+/media/
 
 # Django
 *.log
