@@ -98,6 +98,20 @@ class TestWordReview:
         assert resp.status_code == 404
         assert resp.json()["error"]["code"] == "WORD_NOT_FOUND"
 
+    def test_accepted_answer_is_correct(self, api_client, student):
+        word = Word.objects.create(
+            student=student, word="to shut down", definition="to stop operating",
+            accepted_answers=["shut down"], next_review_date=date.today(),
+        )
+        resp = api_client.post(
+            f"/api/words/{word.id}/review/",
+            {"student_answer": "shut down"}, format="json",
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["correct"] is True
+        assert data["correct_answer"] == "to shut down"
+
 
 @pytest.mark.django_db
 class TestAddWord:
@@ -118,7 +132,22 @@ class TestAddWord:
         assert data["mastery"] == "new"
         # collocations round-trip: stored as text, returned as a list
         assert data["collocations"] == ["hold at bay", "keep something at bay"]
+        assert data["accepted_answers"] == []
         assert Word.objects.filter(student=student, word="keep at bay").exists()
+
+    def test_create_with_accepted_answers(self, api_client, student):
+        payload = {
+            "word": "to choke",
+            "definition": "to be unable to breathe",
+            "accepted_answers": ["choke"],
+        }
+        resp = api_client.post(
+            f"/api/students/{student.id}/words/", payload, format="json"
+        )
+        assert resp.status_code == 201
+        assert resp.json()["accepted_answers"] == ["choke"]
+        word = Word.objects.get(student=student, word="to choke")
+        assert word.accepted_answers == ["choke"]
 
     def test_duplicate_word(self, api_client, student):
         Word.objects.create(student=student, word="vow", definition="a promise")
@@ -179,3 +208,49 @@ class TestWordsByMastery:
         resp = api_client.get(f"/api/students/{student.id}/words/by-mastery/bogus/")
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.django_db
+class TestUpdateWord:
+    def test_patch_accepted_answers(self, api_client, student):
+        word = Word.objects.create(
+            student=student, word="to sit tight", definition="to wait patiently",
+        )
+        resp = api_client.patch(
+            f"/api/words/{word.id}/",
+            {"accepted_answers": ["sit tight"]}, format="json",
+        )
+        assert resp.status_code == 200
+        assert resp.json()["accepted_answers"] == ["sit tight"]
+        word.refresh_from_db()
+        assert word.accepted_answers == ["sit tight"]
+
+    def test_patch_leaves_other_fields_untouched(self, api_client, student):
+        word = Word.objects.create(
+            student=student, word="to commit", definition="to pledge",
+            review_count=3, mastery="learning",
+        )
+        resp = api_client.patch(
+            f"/api/words/{word.id}/",
+            {"accepted_answers": ["commit"]}, format="json",
+        )
+        assert resp.status_code == 200
+        word.refresh_from_db()
+        assert word.review_count == 3
+        assert word.mastery == "learning"
+
+    def test_patch_word_not_found(self, api_client):
+        resp = api_client.patch(
+            "/api/words/999/", {"accepted_answers": ["x"]}, format="json"
+        )
+        assert resp.status_code == 404
+        assert resp.json()["error"]["code"] == "WORD_NOT_FOUND"
+
+    def test_patch_duplicate_word_rejected(self, api_client, student):
+        Word.objects.create(student=student, word="vow", definition="a promise")
+        target = Word.objects.create(student=student, word="oath", definition="a vow")
+        resp = api_client.patch(
+            f"/api/words/{target.id}/", {"word": "vow"}, format="json"
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "WORD_ALREADY_EXISTS"

@@ -7,6 +7,7 @@ from .views import (
     WordReviewView,
     WordsByMasteryView,
     WordsDueView,
+    WordUpdateView,
 )
 
 app_name = "vocabulary_api"
@@ -36,5 +37,10 @@ urlpatterns = [
         "words/<int:word_id>/review/",
         WordReviewView.as_view(),
         name="word_review",
+    ),
+    path(
+        "words/<int:word_id>/",
+        WordUpdateView.as_view(),
+        name="word_detail",
     ),
 ]

@@ -32,16 +32,29 @@ def calculate_next_interval(current_interval_idx: int, correct: bool) -> int:
     return INTERVALS[next_idx]
 
 
+def normalize_answer(text: str) -> str:
+    """Normalize an answer for comparison: trim whitespace, lowercase."""
+    return text.strip().lower()
+
+
 def check_review_answer(word_id: int, student_answer: str) -> dict:
     """
     Validate a student's answer to a vocabulary review question.
+
+    The answer matches if it equals the main ``word`` or any entry in the
+    word's ``accepted_answers`` (all compared via :func:`normalize_answer`).
     Returns: {"correct": bool, "correct_answer": str, "next_review": date}
     """
     word = get_object_or_404(Word, id=word_id)
     correct_answer = word.word.strip()
-    student_answer = student_answer.strip()
+    normalized_answer = normalize_answer(student_answer)
 
-    is_correct = student_answer.lower() == correct_answer.lower()
+    is_correct = normalized_answer == normalize_answer(word.word)
+    if not is_correct and word.accepted_answers:
+        is_correct = any(
+            normalized_answer == normalize_answer(alt)
+            for alt in word.accepted_answers
+        )
 
     update_word_after_review(word, is_correct)
 
@@ -100,6 +113,7 @@ def create_word(
     difficulty: str = "B2",
     example_sentence: str = "",
     collocations: str = "",
+    accepted_answers: list | None = None,
 ) -> Word:
     """
     Create a new vocabulary word for a student. DT-05.
@@ -115,4 +129,32 @@ def create_word(
         difficulty=difficulty,
         example_sentence=example_sentence,
         collocations=collocations,
+        accepted_answers=accepted_answers or [],
     )
+
+
+# Word fields a teacher may edit after creation.
+EDITABLE_WORD_FIELDS = {
+    "word",
+    "definition",
+    "difficulty",
+    "example_sentence",
+    "collocations",
+    "accepted_answers",
+}
+
+
+def update_word(word_id: int, **fields) -> Word:
+    """
+    Partially update an existing word's editable content fields.
+
+    Only keys in :data:`EDITABLE_WORD_FIELDS` are applied; unknown keys are
+    ignored. Spaced-repetition state (mastery, intervals, counters) is never
+    touched here.
+    """
+    word = get_object_or_404(Word, id=word_id)
+    for key, value in fields.items():
+        if key in EDITABLE_WORD_FIELDS:
+            setattr(word, key, value)
+    word.save()
+    return word

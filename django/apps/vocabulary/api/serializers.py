@@ -14,6 +14,7 @@ class WordSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "word",
+            "accepted_answers",
             "definition",
             "difficulty",
             "example_sentence",
@@ -42,6 +43,26 @@ class WordCreateSerializer(serializers.Serializer):
     )
     collocations = serializers.ListField(
         child=serializers.CharField(), required=False, default=list
+    )
+    accepted_answers = serializers.ListField(
+        child=serializers.CharField(), required=False, default=list
+    )
+
+
+class WordUpdateSerializer(serializers.Serializer):
+    """Input payload for partially updating a vocabulary word's content."""
+
+    word = serializers.CharField(max_length=255, required=False)
+    definition = serializers.CharField(required=False)
+    difficulty = serializers.ChoiceField(
+        choices=Word.DIFFICULTY_CHOICES, required=False
+    )
+    example_sentence = serializers.CharField(required=False, allow_blank=True)
+    collocations = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
+    accepted_answers = serializers.ListField(
+        child=serializers.CharField(), required=False
     )
 
 

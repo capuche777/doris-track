@@ -21,6 +21,14 @@ class Word(models.Model):
         "profiles.Student", on_delete=models.CASCADE, related_name="words"
     )
     word = models.CharField(max_length=255)
+    accepted_answers = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=(
+            "List of alternative answers accepted as correct during review, "
+            "in addition to the main word."
+        ),
+    )
     definition = models.TextField()
     difficulty = models.CharField(max_length=2, choices=DIFFICULTY_CHOICES, default="B2")
     example_sentence = models.TextField(blank=True)

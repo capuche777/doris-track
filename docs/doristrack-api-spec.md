@@ -66,6 +66,7 @@ List words due for review today.
     {
       "id": 101,
       "word": "straightaway",
+      "accepted_answers": [],
       "definition": "immediately; without delay",
       "difficulty": "C1",
       "example_sentence": "I knew straightaway that something was wrong.",
@@ -84,8 +85,9 @@ List words due for review today.
 Submit a review answer. Doris calls this after the student answers.
 
 > **Review direction:** the student is shown the **definition** and must type
-> the **word**. Grading is case-insensitive exact match against the word.
-> `correct_answer` is therefore the word itself, not its definition.
+> the **word**. Grading is a case-insensitive, whitespace-trimmed match
+> against the word **or any of its `accepted_answers`**. `correct_answer` is
+> always the main word itself (not an accepted alternative or the definition).
 
 **Request:** (for word #101 `"straightaway"`)
 ```json
@@ -159,14 +161,15 @@ List words filtered by mastery level.
 
 Add a new vocabulary word.
 
-**Request:**
+**Request:** (`accepted_answers` is optional, defaults to `[]`)
 ```json
 {
-  "word": "keep at bay",
+  "word": "to keep at bay",
   "definition": "to prevent something from coming close or happening",
   "difficulty": "C1",
   "example_sentence": "She kept the illness at bay with daily exercise.",
-  "collocations": ["hold at bay", "keep something at bay"]
+  "collocations": ["hold at bay", "keep something at bay"],
+  "accepted_answers": ["keep at bay"]
 }
 ```
 
@@ -174,7 +177,8 @@ Add a new vocabulary word.
 ```json
 {
   "id": 203,
-  "word": "keep at bay",
+  "word": "to keep at bay",
+  "accepted_answers": ["keep at bay"],
   "definition": "to prevent something from coming close or happening",
   "difficulty": "C1",
   "mastery": "new",
@@ -183,6 +187,28 @@ Add a new vocabulary word.
   "times_wrong": 0
 }
 ```
+
+### `PATCH /api/words/{word_id}/`
+
+Update a word's editable content. All fields are optional; only those sent
+are changed. Spaced-repetition state (mastery, intervals, counters) is never
+modified here.
+
+**Editable fields:** `word`, `definition`, `difficulty`, `example_sentence`,
+`collocations`, `accepted_answers`.
+
+**Request:** (add accepted answers to an existing word)
+```json
+{
+  "accepted_answers": ["keep at bay"]
+}
+```
+
+**Response:** the updated word (same shape as the `words/due/` entries).
+
+**Errors:** `400` (`VALIDATION_ERROR`) on invalid input, `400`
+(`WORD_ALREADY_EXISTS`) if `word` is changed to one the student already has,
+`404` (`WORD_NOT_FOUND`) if the word does not exist.
 
 **Errors:** `400` if word already exists or fields missing, `404` if student not found.
 

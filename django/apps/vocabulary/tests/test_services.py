@@ -3,7 +3,13 @@ import pytest
 from datetime import date, timedelta
 from apps.profiles.models import Student
 from apps.vocabulary.models import Word
-from apps.vocabulary.services import update_word_after_review, check_review_answer, calculate_next_interval
+from apps.vocabulary.services import (
+    update_word_after_review,
+    check_review_answer,
+    calculate_next_interval,
+    create_word,
+    update_word,
+)
 
 
 @pytest.mark.django_db
@@ -167,3 +173,79 @@ class TestCheckReviewAnswer:
         result = check_review_answer(self.word.id, "ephemeral")
         assert "next_review" in result
         assert result["next_review"] is not None
+
+
+@pytest.mark.django_db
+class TestAcceptedAnswers:
+    """check_review_answer should honour the word's accepted_answers list."""
+
+    def setup_method(self):
+        self.student = Student.objects.create(
+            name="Accepted Tester", email="accepted@test.com"
+        )
+        self.word = Word.objects.create(
+            student=self.student,
+            word="to shut down",
+            definition="to stop operating",
+            accepted_answers=["shut down"],
+            next_review_date=date.today(),
+        )
+
+    def test_accepted_answer_is_correct(self):
+        assert check_review_answer(self.word.id, "shut down")["correct"] is True
+
+    def test_accepted_answer_is_case_insensitive(self):
+        assert check_review_answer(self.word.id, "  SHUT DOWN ")["correct"] is True
+
+    def test_main_word_still_matches(self):
+        assert check_review_answer(self.word.id, "to shut down")["correct"] is True
+
+    def test_unlisted_answer_is_wrong(self):
+        assert check_review_answer(self.word.id, "power off")["correct"] is False
+
+    def test_correct_answer_is_always_the_main_word(self):
+        """Matching an accepted answer still reports the main word as correct."""
+        result = check_review_answer(self.word.id, "shut down")
+        assert result["correct_answer"] == "to shut down"
+
+    def test_empty_accepted_answers_behaves_as_before(self):
+        word = Word.objects.create(
+            student=self.student, word="vow", definition="a promise",
+            next_review_date=date.today(),
+        )
+        assert check_review_answer(word.id, "vow")["correct"] is True
+        assert check_review_answer(word.id, "promise")["correct"] is False
+
+
+@pytest.mark.django_db
+class TestCreateAndUpdateWord:
+    """create_word / update_word handle accepted_answers."""
+
+    def setup_method(self):
+        self.student = Student.objects.create(
+            name="CRUD Tester", email="crud@test.com"
+        )
+
+    def test_create_word_defaults_to_empty_accepted_answers(self):
+        word = create_word(self.student, word="vow", definition="a promise")
+        assert word.accepted_answers == []
+
+    def test_create_word_stores_accepted_answers(self):
+        word = create_word(
+            self.student, word="to choke", definition="to be unable to breathe",
+            accepted_answers=["choke"],
+        )
+        assert word.accepted_answers == ["choke"]
+
+    def test_update_word_sets_accepted_answers(self):
+        word = create_word(self.student, word="to strike", definition="to hit")
+        updated = update_word(word.id, accepted_answers=["strike"])
+        updated.refresh_from_db()
+        assert updated.accepted_answers == ["strike"]
+
+    def test_update_word_ignores_non_editable_fields(self):
+        word = create_word(self.student, word="to dot", definition="d")
+        update_word(word.id, mastery="mastered", review_count=99)
+        word.refresh_from_db()
+        assert word.mastery == "new"
+        assert word.review_count == 0

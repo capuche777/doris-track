@@ -14,7 +14,12 @@ from apps.vocabulary.selectors import (
     get_words_by_mastery,
     get_words_for_review,
 )
-from apps.vocabulary.services import check_review_answer, create_word, word_exists
+from apps.vocabulary.services import (
+    check_review_answer,
+    create_word,
+    update_word,
+    word_exists,
+)
 from core.exceptions import StudentNotFound, WordAlreadyExists, WordNotFound
 from core.query_params import parse_positive_int
 
@@ -24,6 +29,7 @@ from .serializers import (
     ReviewResultSerializer,
     WordCreateSerializer,
     WordSerializer,
+    WordUpdateSerializer,
 )
 
 DEFAULT_DUE_LIMIT = 20
@@ -144,8 +150,54 @@ class AddWordView(APIView):
             difficulty=data["difficulty"],
             example_sentence=data["example_sentence"],
             collocations=", ".join(data["collocations"]),
+            accepted_answers=data["accepted_answers"],
         )
         return Response(WordSerializer(word).data, status=status.HTTP_201_CREATED)
+
+
+class WordUpdateView(APIView):
+    """Update a vocabulary word's editable content (e.g. accepted answers)."""
+
+    @extend_schema(
+        summary="Update a vocabulary word",
+        description=(
+            "Partially updates a word's editable content fields (word, "
+            "definition, difficulty, example_sentence, collocations, "
+            "accepted_answers). Spaced-repetition state is left untouched."
+        ),
+        request=WordUpdateSerializer,
+        responses={
+            200: WordSerializer,
+            400: OpenApiResponse(description="Validation error or duplicate word"),
+            404: OpenApiResponse(description="Word not found"),
+        },
+        tags=["Vocabulary"],
+    )
+    def patch(self, request, word_id):
+        word = Word.objects.filter(id=word_id).first()
+        if word is None:
+            raise WordNotFound()
+
+        serializer = WordUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        data = dict(serializer.validated_data)
+
+        new_word = data.get("word")
+        if (
+            new_word is not None
+            and new_word != word.word
+            and Word.objects.filter(student=word.student, word=new_word)
+            .exclude(id=word.id)
+            .exists()
+        ):
+            raise WordAlreadyExists()
+
+        # collocations are stored as comma-separated text, exposed as a list.
+        if "collocations" in data:
+            data["collocations"] = ", ".join(data["collocations"])
+
+        updated = update_word(word_id, **data)
+        return Response(WordSerializer(updated).data)
 
 
 class DifficultWordsView(APIView):
